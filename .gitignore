@@ -1,0 +1,23 @@
+# Gradle specific files
+.gradle/
+build/
+
+# Java compiled files
+*.class
+
+# Build artifacts
+*.jar
+*.war
+*.ear
+
+# Log files
+*.log
+
+# IDEs and Editors
+.idea
+*.iml
+*.ipr
+*.iws
+
+# OS generated files
+.DS_Store
