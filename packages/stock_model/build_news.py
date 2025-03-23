@@ -22,16 +22,19 @@ def main():
     logger.info(f"{len(companies)} companies loaded.")
 
     # Initialize GDELT fetcher & analyzers
-    gdelt_fetcher = GdeltFetcher(timespan="3m", maxrecords=250)
+    gdelt_fetcher = GdeltFetcher(maxrecords=250)
     textblob_analyzer = TextBlobAnalyzer()
     finbert_analyzer = FinBertAnalyzer()
     spacy_analyzer = SpacySimilarityAnalyzer(model_name="en_core_web_md")
 
+    start_date = "2024-01-01"
+    end_date = "2024-12-31"
+
     all_news = []
-    # Fetch news for each company
     for i, company in enumerate(companies, start=1):
-        logger.info(f"({i}/{len(companies)}) Fetching news for {company['name']} ({company['ticker']}).")
-        articles = gdelt_fetcher.fetch_news_for_company(company)
+        logger.info(
+            f"({i}/{len(companies)}) Fetching news for {company['name']} ({company['ticker']}) from {start_date} to {end_date}.")
+        articles = gdelt_fetcher.fetch_news_for_company(company, start_date, end_date)
         if articles:
             all_news.extend(articles)
 

@@ -1,5 +1,6 @@
 import requests
 import yfinance as yf
+from datetime import datetime, timedelta
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from stock_model.logger import get_logger
@@ -101,67 +102,68 @@ class GdeltFetcher:
         )
     }
 
-    def __init__(self, timespan="3m", maxrecords=250):
-        """
-        :param timespan: e.g., '3m' for 3 months
-        :param maxrecords: number of max articles per query
-        """
-        self.timespan = timespan
+    def __init__(self, maxrecords=250):
         self.maxrecords = maxrecords
 
     def _build_query(self, company_name: str) -> str:
-        """
-        Build a GDELT query that targets Yahoo Finance articles for the given company name.
-        """
         finance_domains_block = "domain:finance.yahoo.com"
         company_block = f"\"{company_name}\""
         return f"{finance_domains_block} {company_block}"
 
-    def fetch_news_for_company(self, company: dict) -> list:
-        """
-        Fetch GDELT news articles for the specified company.
-        Return a list of dictionaries for each article.
-        """
+    def _generate_date_ranges(self, start_date: str, end_date: str) -> list:
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
+        date_ranges = []
+        while start < end:
+            period_end = min(start + timedelta(days=90), end)
+            date_ranges.append((start.strftime("%Y%m%d%H%M%S"), period_end.strftime("%Y%m%d%H%M%S")))
+            start = period_end
+        return date_ranges
+
+    def fetch_news_for_company(self, company: dict, start_date: str, end_date: str) -> list:
         query = self._build_query(company["name"])
-        params = {
-            "query": query,
-            "mode": "artlist",
-            "format": "json",
-            "maxrecords": str(self.maxrecords),
-            "timespan": self.timespan,
-            "sort": "datedesc",
-        }
+        date_ranges = self._generate_date_ranges(start_date, end_date)
+        all_results = []
 
-        results = []
-        try:
-            response = requests.get(self.GDELT_URL, params=params, headers=self.USER_AGENT_HEADERS)
-            if not response.text.strip():
-                logger.info(f"Empty GDELT response for {company['name']} ({company['ticker']}).")
-                return results
+        for start, end in date_ranges:
+            params = {
+                "query": query,
+                "mode": "artlist",
+                "format": "json",
+                "maxrecords": str(self.maxrecords),
+                "startdatetime": start,
+                "enddatetime": end,
+                "sort": "datedesc",
+            }
 
-            data = response.json()
-            articles = data.get("articles", [])
+            try:
+                response = requests.get(self.GDELT_URL, params=params, headers=self.USER_AGENT_HEADERS)
+                if not response.text.strip():
+                    logger.info(f"Empty GDELT response for {company['name']} ({company['ticker']}) from {start} to {end}.")
+                    continue
 
-            for article in articles:
-                article_url = article.get("url", "")
-                parsed = urlparse(article_url)
-                row = {
-                    "ticker": company["ticker"],
-                    "name": company["name"],
-                    "title": article.get("title", ""),
-                    "date": article.get("seendate", ""),
-                    "url": article_url,
-                    "summary": "",
-                }
+                data = response.json()
+                articles = data.get("articles", [])
 
-                # Fetch the article text if from Yahoo Finance
-                if "finance.yahoo.com" in parsed.netloc:
-                    html = YahooFinanceArticleFetcher.fetch_html(article_url)
-                    row["summary"] = YahooFinanceArticleFetcher.extract_text(html)
+                for article in articles:
+                    article_url = article.get("url", "")
+                    parsed = urlparse(article_url)
+                    row = {
+                        "ticker": company["ticker"],
+                        "name": company["name"],
+                        "title": article.get("title", ""),
+                        "date": article.get("seendate", ""),
+                        "url": article_url,
+                        "summary": "",
+                    }
 
-                results.append(row)
+                    if "finance.yahoo.com" in parsed.netloc:
+                        html = YahooFinanceArticleFetcher.fetch_html(article_url)
+                        row["summary"] = YahooFinanceArticleFetcher.extract_text(html)
 
-        except Exception as e:
-            logger.warning(f"Error fetching news for {company['name']} ({company['ticker']}): {e}")
+                    all_results.append(row)
 
-        return results
+            except Exception as e:
+                logger.warning(f"Error fetching news for {company['name']} ({company['ticker']}) from {start} to {end}: {e}")
+
+        return all_results
