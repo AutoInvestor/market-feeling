@@ -11,6 +11,8 @@ permissions:
 jobs:
   build_test_release:
     runs-on: ubuntu-22.04
+    outputs:
+      new-version: ${{ steps.calculate_version.outputs.NEW_VERSION }}
     steps:
       - name: Check out the repository
         uses: actions/checkout@v3
@@ -73,7 +75,7 @@ jobs:
             patch=$((patch + 1))
           fi
           NEW_VERSION="$major.$minor.$patch"
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Build & Test
         run: ./gradlew clean build
@@ -88,8 +90,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "${{ env.NEW_VERSION }}"
-          release_name: "${{ env.NEW_VERSION }}"
+          tag_name: "${{ steps.calculate_version.outputs.NEW_VERSION }}"
+          release_name: "${{ steps.calculate_version.outputs.NEW_VERSION }}"
           draft: false
           prerelease: false
 
@@ -111,7 +113,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ steps.find_jar.outputs.jar_file }}
-          asset_name: autoinvestor-${{ github.event.repository.name }}-${{ env.NEW_VERSION }}.jar
+          asset_name: autoinvestor-${{ github.event.repository.name }}-${{ steps.calculate_version.outputs.NEW_VERSION }}.jar
           asset_content_type: application/java-archive
 
       - name: Create app.jar
@@ -129,31 +131,21 @@ jobs:
         if: steps.version_increment.outputs.bump != 'none'
         run: |
           docker build \
-            --build-arg NEW_VERSION=${{ env.NEW_VERSION }} \
-            -t ${{ vars.DOCKERHUB_NAMESPACE }}/autoinvestor-${{ github.event.repository.name }}:${{ env.NEW_VERSION }} \
+            --build-arg NEW_VERSION=${{ steps.calculate_version.outputs.NEW_VERSION }} \
+            -t ${{ vars.DOCKERHUB_NAMESPACE }}/autoinvestor-${{ github.event.repository.name }}:${{ steps.calculate_version.outputs.NEW_VERSION }} \
             -t ${{ vars.DOCKERHUB_NAMESPACE }}/autoinvestor-${{ github.event.repository.name }}:latest \
             .
 
       - name: Push Docker Image
         if: steps.version_increment.outputs.bump != 'none'
         run: |
-          docker push ${{ vars.DOCKERHUB_NAMESPACE }}/autoinvestor-${{ github.event.repository.name }}:${{ env.NEW_VERSION }}
+          docker push ${{ vars.DOCKERHUB_NAMESPACE }}/autoinvestor-${{ github.event.repository.name }}:${{ steps.calculate_version.outputs.NEW_VERSION }}
           docker push ${{ vars.DOCKERHUB_NAMESPACE }}/autoinvestor-${{ github.event.repository.name }}:latest
 
-      - name: Update Deployment in CD Repository
-        if: steps.version_increment.outputs.bump != 'none'
-        env:
-          NEW_VERSION: ${{ env.NEW_VERSION }}
-          CD_REPO_TOKEN: ${{ secrets.CD_REPO_TOKEN }}
-        run: |
-          git clone https://x-access-token:${CD_REPO_TOKEN}@github.com/AutoInvestor/infra-gitops.git
-          cd infra-gitops
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          sed -i "/docker.io\/polpinol98\/autoinvestor-${{ github.event.repository.name }}/ {N;s/\(version:[[:space:]]*\).*/\1${NEW_VERSION}/;}" config/deployment-config.yaml
-
-          git add config/deployment-config.yaml
-          git commit -m "Update ${{ github.event.repository.name }} version to ${NEW_VERSION}"
-          git push origin main
+  update-cd-repo:
+    uses: AutoInvestor/infra-gitops/.github/workflows/update-version.yml@main
+    needs: build_test_release
+    with:
+      image: autoinvestor-market-feeling
+      version: ${{ needs.build_test_release.outputs.new-version }}
+    secrets: inherit
