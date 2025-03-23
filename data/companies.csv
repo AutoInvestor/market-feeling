@@ -1,0 +1,11 @@
+ticker,name,sector
+AAPL,Apple Inc.,Technology
+MSFT,Microsoft Corporation,Technology
+NVDA,NVIDIA Corporation,Technology
+AMZN,"Amazon.com, Inc.",Consumer Cyclical
+META,"Meta Platforms, Inc.",Communication Services
+NFLX,"Netflix, Inc.",Communication Services
+GOOGL,Alphabet Inc.,Communication Services
+TSLA,"Tesla, Inc.",Consumer Cyclical
+PEP,"PepsiCo, Inc.",Consumer Defensive
+MDB,"MongoDB, Inc.",Technology
