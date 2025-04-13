@@ -1,5 +1,6 @@
 import logging
 
+
 def get_logger(name: str = __name__) -> logging.Logger:
     """
     Initialize and return a logger with a specified name.

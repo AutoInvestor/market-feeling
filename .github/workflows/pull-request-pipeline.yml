@@ -6,24 +6,28 @@ on:
       - main
 
 jobs:
-  build-and-test-pipeline:
-    runs-on: ubuntu-22.04
+  test-and-format:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v2
+      - name: 🧾 Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v2
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
         with:
-          distribution: 'temurin'
-          java-version: 21
+          python-version: '3.11'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: 📦 Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Build & Test
-        run: ./gradlew clean build
+      - name: 📂 Install dependencies
+        run: poetry install --no-interaction --no-root
 
-      - name: Run Linter Check
-        run: ./gradlew spotlessCheck
+      - name: ✅ Run tests
+        run: poetry run pytest
+
+      - name: 🎨 Check formatting with Black
+        run: poetry run black . --check

@@ -28,6 +28,7 @@ logger = get_logger(__name__)
 #       Ranges from 0.0 (no similarity) to 1.0 (highly similar).
 #       Measures how similar the article text is to the company name based on spaCy embeddings.
 
+
 class TextBlobAnalyzer:
     """
     Analyzes sentiment using TextBlob (polarity and subjectivity).
@@ -82,7 +83,9 @@ class SpacySimilarityAnalyzer:
         try:
             self.nlp = spacy.load(model_name)
         except OSError as e:
-            logger.error(f"Failed to load spaCy model '{model_name}'. Make sure it's installed. {e}")
+            logger.error(
+                f"Failed to load spaCy model '{model_name}'. Make sure it's installed. {e}"
+            )
             raise
 
     def compute_similarity(self, text1: str, text2: str) -> float:

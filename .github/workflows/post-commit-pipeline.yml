@@ -5,93 +5,29 @@ on:
     branches:
       - main
 
-permissions:
-  contents: write
-
 jobs:
-  build_test_release:
-    runs-on: ubuntu-22.04
-    outputs:
-      new-version: ${{ steps.calculate_version.outputs.NEW_VERSION }}
-      bump: ${{ steps.version_increment.outputs.bump }}
+  test-and-format:
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: 🧾 Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
         with:
-          distribution: temurin
-          java-version: 21
+          python-version: '3.11'
 
-      - name: Get merged pull request
-        id: get_merged_pr
-        uses: actions-ecosystem/action-get-merged-pull-request@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get latest tag
-        id: get_latest_tag
+      - name: 📦 Install Poetry
         run: |
-          LATEST_TAG=$(git tag --sort=-v:refname | head -n 1)
-          if [ -z "$LATEST_TAG" ]; then
-            LATEST_TAG="0.0.0"
-          fi
-          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Determine version increment
-        id: version_increment
-        run: |
-          LABELS="${{ steps.get_merged_pr.outputs.labels }}"
-          BUMP="none"
-          if [[ "$LABELS" == *"major"* ]]; then
-            BUMP="major"
-          elif [[ "$LABELS" == *"minor"* ]]; then
-            BUMP="minor"
-          elif [[ "$LABELS" == *"patch"* ]]; then
-            BUMP="patch"
-          fi
-          echo "bump=$BUMP" >> $GITHUB_OUTPUT
+      - name: 📂 Install dependencies
+        run: poetry install --no-interaction --no-root
 
-      - name: Calculate new version (Semantic Versioning)
-        id: calculate_version
-        run: |
-          if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "0.0.0" ]; then
-            VERSION="0.0.0"
-          else
-            VERSION=${LATEST_TAG#v}
-          fi
-          IFS='.' read -r major minor patch <<< "$VERSION"
-          BUMP=${{ steps.version_increment.outputs.bump }}
-          if [ "$BUMP" = "major" ]; then
-            major=$((major + 1))
-            minor=0
-            patch=0
-          elif [ "$BUMP" = "minor" ]; then
-            minor=$((minor + 1))
-            patch=0
-          elif [ "$BUMP" = "patch" ]; then
-            patch=$((patch + 1))
-          fi
-          NEW_VERSION="$major.$minor.$patch"
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+      - name: ✅ Run tests
+        run: poetry run pytest
 
-      - name: Build & Test
-        run: ./gradlew clean build
-
-      - name: Run Linter Check
-        run: ./gradlew spotlessCheck
-
-      - name: Create GitHub Release
-        if: steps.version_increment.outputs.bump != 'none'
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: "${{ steps.calculate_version.outputs.NEW_VERSION }}"
-          release_name: "${{ steps.calculate_version.outputs.NEW_VERSION }}"
-          draft: false
-          prerelease: false
+      - name: 🎨 Check formatting with Black
+        run: poetry run black . --check

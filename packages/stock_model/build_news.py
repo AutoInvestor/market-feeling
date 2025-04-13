@@ -7,9 +7,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from stock_model.logger import get_logger
 from stock_model.data_manager import load_from_csv, ensure_dir_exists
 from stock_model.fetchers import GdeltFetcher
-from stock_model.analyzers import TextBlobAnalyzer, FinBertAnalyzer, SpacySimilarityAnalyzer
+from stock_model.analyzers import (
+    TextBlobAnalyzer,
+    FinBertAnalyzer,
+    SpacySimilarityAnalyzer,
+)
 
 logger = get_logger(__name__)
+
 
 def generate_date_ranges(start_date: str, end_date: str, chunk_size_days=90):
     """
@@ -25,6 +30,7 @@ def generate_date_ranges(start_date: str, end_date: str, chunk_size_days=90):
         ranges.append((start.strftime("%Y-%m-%d"), period_end.strftime("%Y-%m-%d")))
         start = period_end
     return ranges
+
 
 def analyze_articles(articles, textblob_analyzer, finbert_analyzer, spacy_analyzer):
     """
@@ -69,6 +75,7 @@ def analyze_articles(articles, textblob_analyzer, finbert_analyzer, spacy_analyz
 
     return df
 
+
 def fetch_analyze_and_save_company(
     company: dict,
     start_date: str,
@@ -78,7 +85,7 @@ def fetch_analyze_and_save_company(
     textblob_analyzer: TextBlobAnalyzer,
     finbert_analyzer: FinBertAnalyzer,
     spacy_analyzer: SpacySimilarityAnalyzer,
-    chunk_size_days: int = 90
+    chunk_size_days: int = 90,
 ):
     """
     Fetch all date-chunks for a single company, analyze, and save to a CSV named by ticker.
@@ -98,17 +105,16 @@ def fetch_analyze_and_save_company(
 
     total_fetched = 0
     for chunk_start, chunk_end in date_chunks:
-        logger.info(f"Fetching GDELT news for {ticker} from {chunk_start} to {chunk_end}...")
+        logger.info(
+            f"Fetching GDELT news for {ticker} from {chunk_start} to {chunk_end}..."
+        )
         articles = gdelt_fetcher.fetch_news_for_company(company, chunk_start, chunk_end)
         if not articles:
             continue
 
         # Analyze in memory
         df_chunk = analyze_articles(
-            articles,
-            textblob_analyzer,
-            finbert_analyzer,
-            spacy_analyzer
+            articles, textblob_analyzer, finbert_analyzer, spacy_analyzer
         )
         total_fetched += len(df_chunk)
 
@@ -119,13 +125,14 @@ def fetch_analyze_and_save_company(
                 index=False,
                 mode="a",
                 header=write_header,
-                encoding="utf-8"
+                encoding="utf-8",
             )
             # After the first write, do not write headers again
             if write_header:
                 write_header = False
 
     logger.info(f"Done with {ticker}. Wrote {total_fetched} articles to {company_csv}.")
+
 
 def main():
     # Input files
@@ -173,7 +180,7 @@ def main():
                     textblob_analyzer,
                     finbert_analyzer,
                     spacy_analyzer,
-                    90  # chunk_size_days
+                    90,  # chunk_size_days
                 )
             )
 
@@ -189,11 +196,13 @@ def main():
     merge_company_csvs(base_output_dir, merged_csv_path)
     logger.info(f"Merged all data into {merged_csv_path}")
 
+
 def merge_company_csvs(output_dir: str, merged_csv_path: str):
     """
     Example of merging all historical_news_*.csv into a single CSV if desired.
     """
     import glob
+
     csv_files = glob.glob(os.path.join(output_dir, "historical_news_*.csv"))
 
     if not csv_files:
@@ -210,6 +219,7 @@ def merge_company_csvs(output_dir: str, merged_csv_path: str):
 
     merged_df.to_csv(merged_csv_path, index=False, encoding="utf-8")
     logger.info(f"Merged CSV saved: {merged_csv_path}")
+
 
 if __name__ == "__main__":
     main()

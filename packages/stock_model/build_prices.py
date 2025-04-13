@@ -6,6 +6,7 @@ from stock_model.fetchers import YFinanceFetcher
 
 logger = get_logger(__name__)
 
+
 def main():
     companies_path = os.path.join(".", "data", "companies.csv")
     df_companies = load_from_csv(companies_path)
@@ -32,6 +33,7 @@ def main():
     ensure_dir_exists(output_path)
     df_all.to_csv(output_path, index=False)
     logger.info(f"Historical prices dataset saved to {output_path}")
+
 
 if __name__ == "__main__":
     main()

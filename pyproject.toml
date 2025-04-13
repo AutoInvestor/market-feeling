@@ -15,7 +15,7 @@ pandas = "^2.0.3"
 requests = "^2.26.0"
 scikit-learn = "^1.2.2"
 joblib = "^1.1.0"
-fastapi = "^0.78.0"
+fastapi = "^0.95.0"
 uvicorn = { extras = ["standard"], version = "^0.18.0" }
 yfinance = "^0.2.18"
 textblob = "^0.17.1"
@@ -24,6 +24,28 @@ beautifulsoup4 = "^4.12.2"
 transformers = "^4.30.0"
 spacy = "^3.8.4"
 torch = "^2.6.0"
+pydantic = "^1.10.7"
+toml = "^0.10.2"
+httpx = "^0.24.0"
+anyio = ">=3.4.0,<5"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0.0"
+black = "^24.3.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | build
+  | dist
+  | __pycache__
+)/
+'''
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "setuptools>=42", "wheel"]

@@ -4,6 +4,7 @@ from stock_model.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 def ensure_dir_exists(filepath: str):
     """
     Ensures that the directory for the given filepath exists.
@@ -11,6 +12,7 @@ def ensure_dir_exists(filepath: str):
     directory = os.path.dirname(filepath)
     if directory and not os.path.exists(directory):
         os.makedirs(directory, exist_ok=True)
+
 
 def save_to_csv(data: list, filepath: str):
     """
@@ -23,6 +25,7 @@ def save_to_csv(data: list, filepath: str):
     df = pd.DataFrame(data)
     df.to_csv(filepath, index=False, encoding="utf-8")
     logger.info(f"Data saved to {filepath}")
+
 
 def load_from_csv(filepath: str) -> pd.DataFrame:
     """

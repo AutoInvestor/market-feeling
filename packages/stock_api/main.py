@@ -1,51 +1,95 @@
-from fastapi import FastAPI, HTTPException
-import joblib
-import pandas as pd
-import requests
-import os
-
-# Import functions or classes from the model package
-from stock_model.train.train_model import load_data, train_model
+import uvicorn
+from fastapi import FastAPI
+from stock_api.application.companies.get_companies_command_handler import (
+    GetCompaniesCommandHandler,
+)
+from stock_api.application.companies.get_company_historical_prices_command_handler import (
+    GetCompanyHistoricalPricesCommandHandler,
+)
+from stock_api.application.companies.get_company_info_command_handler import (
+    GetCompanyInfoCommandHandler,
+)
+from stock_api.application.news.get_latest_news_command_handler import (
+    GetLatestNewsCommandHandler,
+)
+from stock_api.application.news.get_news_by_date_command_handler import (
+    GetNewsByDateCommandHandler,
+)
+from stock_api.application.predictions.predict_from_text_command_handler import (
+    PredictFromTextCommandHandler,
+)
+from stock_api.application.predictions.predict_from_url_command_handler import (
+    PredictFromURLCommandHandler,
+)
+from stock_api.infrastructure.repositories.in_memory_company_repository import (
+    InMemoryCompanyRepository,
+)
+from stock_api.infrastructure.repositories.in_memory_historical_price_repository import (
+    InMemoryHistoricalPriceRepository,
+)
+from stock_api.infrastructure.repositories.in_memory_news_repository import (
+    InMemoryNewsRepository,
+)
+from stock_api.presentation.companies.get_companies_controller import (
+    GetCompaniesController,
+)
+from stock_api.presentation.companies.get_company_historical_prices_controller import (
+    GetCompanyHistoricalPricesController,
+)
+from stock_api.presentation.companies.get_company_info_controller import (
+    GetCompanyInfoController,
+)
+from stock_api.presentation.news.get_latest_news_controller import (
+    GetLatestNewsController,
+)
+from stock_api.presentation.news.get_news_by_date_controller import (
+    GetNewsByDateController,
+)
+from stock_api.presentation.predictions.predict_from_text_controller import (
+    PredictFromTextController,
+)
+from stock_api.presentation.predictions.predict_from_url_controller import (
+    PredictFromURLController,
+)
 
 app = FastAPI()
 
-# Load the pre-trained model using the local package
-try:
-    model_path = os.path.join("models", "stock_model.pkl")
-    model = joblib.load(model_path)
-except Exception as e:
-    model = None
-    print("Model not found. Ensure you have built it using the model project.")
+# Composition Root Setup: instantiate repository and inject dependencies into use cases.
+company_repository = InMemoryCompanyRepository()
+historical_prices_repository = InMemoryHistoricalPriceRepository()
+news_repository = InMemoryNewsRepository()
 
-@app.get("/companies")
-def get_companies():
-    try:
-        companies_path = os.path.join("data", "companies.csv")
-        df = pd.read_csv(companies_path)
-        return df.to_dict(orient="records")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Error loading companies data.")
+get_companies_command_handler = GetCompaniesCommandHandler(company_repository)
+get_company_info_command_handler = GetCompanyInfoCommandHandler(company_repository)
+get_historical_prices_command_handler = GetCompanyHistoricalPricesCommandHandler(
+    historical_prices_repository
+)
+predict_from_text_command_handler = PredictFromTextCommandHandler()
+predict_from_url_command_handler = PredictFromURLCommandHandler()
+get_latest_news_command_handler = GetLatestNewsCommandHandler(news_repository)
+get_news_by_date_command_handler = GetNewsByDateCommandHandler(news_repository)
 
-@app.get("/realtime/{ticker}")
-def get_realtime_data(ticker: str):
-    API_KEY = os.getenv("ALPHAVANTAGE_API_KEY", "your_api_key_here")
-    url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={ticker}&apikey={API_KEY}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json().get("Global Quote", {})
-        if not data:
-            raise HTTPException(status_code=404, detail="Ticker data not found.")
-        return data
-    else:
-        raise HTTPException(status_code=500, detail="Error fetching data from external API.")
+# Instantiate controllers with their use-case dependencies.
+get_companies_controller = GetCompaniesController(get_companies_command_handler)
+get_company_info_controller = GetCompanyInfoController(get_company_info_command_handler)
+get_company_historical_prices_controller = GetCompanyHistoricalPricesController(
+    get_historical_prices_command_handler
+)
+prediction_text_controller = PredictFromTextController(
+    predict_from_text_command_handler
+)
+prediction_url_controller = PredictFromURLController(predict_from_url_command_handler)
+latest_news_controller = GetLatestNewsController(get_latest_news_command_handler)
+news_by_date_controller = GetNewsByDateController(get_news_by_date_command_handler)
 
-@app.post("/predict")
-def predict_stock(features: dict):
-    if model is None:
-        raise HTTPException(status_code=500, detail="Model not available. Train the model first.")
-    try:
-        input_df = pd.DataFrame([features])
-        prediction = model.predict(input_df.select_dtypes(include=["number"]))
-        return {"prediction": prediction.tolist()}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Invalid input data for prediction.")
+# Include each controller's router into the FastAPI app.
+app.include_router(get_companies_controller.router)
+app.include_router(get_company_info_controller.router)
+app.include_router(get_company_historical_prices_controller.router)
+app.include_router(prediction_text_controller.router)
+app.include_router(prediction_url_controller.router)
+app.include_router(latest_news_controller.router)
+app.include_router(news_by_date_controller.router)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)

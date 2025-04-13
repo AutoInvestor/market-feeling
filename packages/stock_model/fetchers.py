@@ -24,7 +24,7 @@ class YFinanceFetcher:
                 return {
                     "ticker": info.get("symbol", ticker),
                     "name": info.get("longName", ""),
-                    "sector": info.get("sector", "")
+                    "sector": info.get("sector", ""),
                 }
             else:
                 logger.warning(f"No company info found for {ticker}")
@@ -64,7 +64,9 @@ class YahooFinanceArticleFetcher:
         Fetch the raw HTML content for a Yahoo Finance article using a shared session.
         """
         try:
-            resp = session.get(url, headers=YahooFinanceArticleFetcher.USER_AGENT_HEADERS)
+            resp = session.get(
+                url, headers=YahooFinanceArticleFetcher.USER_AGENT_HEADERS
+            )
             resp.raise_for_status()
             return resp.text
         except requests.exceptions.RequestException:
@@ -77,6 +79,7 @@ class YahooFinanceArticleFetcher:
         if article_div:
             return article_div.get_text(separator="\n", strip=True)
         return ""
+
 
 class GdeltFetcher:
     """
@@ -92,20 +95,24 @@ class GdeltFetcher:
         self.session = session
         self.maxrecords = maxrecords
         # We'll store user agent in a single place
-        self.session.headers.update({
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/90.0.4430.85 Safari/537.36"
-            )
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/90.0.4430.85 Safari/537.36"
+                )
+            }
+        )
 
     def _build_query(self, company_name: str) -> str:
         finance_domains_block = "domain:finance.yahoo.com"
-        company_block = f"\"{company_name}\""
+        company_block = f'"{company_name}"'
         return f"{finance_domains_block} {company_block}"
 
-    def fetch_news_for_company(self, company: dict, start_date: str, end_date: str) -> list:
+    def fetch_news_for_company(
+        self, company: dict, start_date: str, end_date: str
+    ) -> list:
         """
         Fetch articles for the given company in [start_date, end_date].
         This version fetches just once if your chunk logic is external –
@@ -123,7 +130,9 @@ class GdeltFetcher:
         try:
             response = self.session.get(self.GDELT_URL, params=params)
             if not response.text.strip():
-                logger.info(f"No GDELT results for {company['name']} from {start_date} to {end_date}.")
+                logger.info(
+                    f"No GDELT results for {company['name']} from {start_date} to {end_date}."
+                )
                 return []
             data = response.json()
             articles = data.get("articles", [])
@@ -141,10 +150,14 @@ class GdeltFetcher:
                     "summary": "",
                 }
                 if "finance.yahoo.com" in parsed.netloc:
-                    html = YahooFinanceArticleFetcher.fetch_html(article_url, self.session)
+                    html = YahooFinanceArticleFetcher.fetch_html(
+                        article_url, self.session
+                    )
                     row["summary"] = YahooFinanceArticleFetcher.extract_text(html)
                 results.append(row)
             return results
         except Exception as ex:
-            logger.warning(f"Failed to fetch articles for {company['ticker']} in {start_date}-{end_date}: {ex}")
+            logger.warning(
+                f"Failed to fetch articles for {company['ticker']} in {start_date}-{end_date}: {ex}"
+            )
             return []
