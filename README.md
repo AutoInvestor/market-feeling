@@ -1,2 +1,3 @@
-# market-feeling
-Scraping financial news, sentiment analysis using AI, and statistical insights.
+ poetry run python -m spacy download en_core_web_sm
+ 
+ poetry run python -m spacy download en_core_web_md

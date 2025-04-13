@@ -20,11 +20,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
         with:
-          distribution: temurin
-          java-version: 21
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
 
       - name: Get merged pull request
         id: get_merged_pr
@@ -78,11 +85,13 @@ jobs:
           NEW_VERSION="$major.$minor.$patch"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Build & Test
-        run: ./gradlew clean build
+      - name: Run tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/packages
+        run: poetry run pytest
 
-      - name: Run Linter Check
-        run: ./gradlew spotlessCheck
+      - name: Check formatting
+        run: poetry run black . --check
 
       - name: Build & push docker image
         if: steps.version_increment.outputs.bump != 'none'
@@ -90,7 +99,10 @@ jobs:
           DOCKER_IMAGE_VERSION: "${{ steps.calculate_version.outputs.NEW_VERSION }}"
           DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: ./gradlew bootBuildImage
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+          docker build -t autoinvestor-market-feeling:${DOCKER_IMAGE_VERSION} .
+          docker push autoinvestor-market-feeling:${DOCKER_IMAGE_VERSION}
 
       - name: Create GitHub Release
         if: steps.version_increment.outputs.bump != 'none'
