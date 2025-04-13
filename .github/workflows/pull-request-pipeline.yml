@@ -6,30 +6,30 @@ on:
       - main
 
 jobs:
-  test-and-format:
+  build_test:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: 🧾 Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: 🐍 Set up Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: 📦 Install Poetry
+      - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: 📂 Install dependencies
+      - name: Install dependencies
         run: poetry install --no-interaction --no-root
 
-      - name: ✅ Run tests
+      - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}/packages
         run: poetry run pytest
 
-      - name: 🎨 Check formatting with Black
+      - name: Check formatting
         run: poetry run black . --check
