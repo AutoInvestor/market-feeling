@@ -27,6 +27,8 @@ jobs:
         run: poetry install --no-interaction --no-root
 
       - name: ✅ Run tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/packages
         run: poetry run pytest
 
       - name: 🎨 Check formatting with Black
