@@ -30,9 +30,15 @@ from stock_api.infrastructure.repositories.in_memory_historical_price_repository
 from stock_api.infrastructure.repositories.in_memory_news_repository import (
     InMemoryNewsRepository,
 )
-from stock_api.infrastructure.repositories.yfinance_company_repository import YFinanceCompanyRepository
-from stock_api.infrastructure.repositories.yfinance_historical_price_repository import YFinanceHistoricalPriceRepository
-from stock_api.infrastructure.repositories.yfinance_news_repository import YFinanceNewsRepository
+from stock_api.infrastructure.repositories.yfinance_company_repository import (
+    YFinanceCompanyRepository,
+)
+from stock_api.infrastructure.repositories.yfinance_historical_price_repository import (
+    YFinanceHistoricalPriceRepository,
+)
+from stock_api.infrastructure.repositories.yfinance_news_repository import (
+    YFinanceNewsRepository,
+)
 from stock_api.presentation.companies.get_companies_controller import (
     GetCompaniesController,
 )

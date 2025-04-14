@@ -3,14 +3,15 @@ from typing import Optional, Dict
 from stock_api.domain.company import Company
 from stock_api.domain.company_repository import CompanyRepository
 
+
 class YFinanceCompanyRepository(CompanyRepository):
     def __init__(self):
         self.__tickers = [
             "AAPL",  # Apple Inc.
             "MSFT",  # Microsoft Corporation
             "AMZN",  # Amazon.com, Inc.
-            "GOOGL", # Alphabet Inc.
-            "FB",    # Meta Platforms, Inc.
+            "GOOGL",  # Alphabet Inc.
+            "FB",  # Meta Platforms, Inc.
             "NVDA",  # NVIDIA Corporation
             "TSLA",  # Tesla, Inc.
             "NFLX",  # Netflix, Inc.

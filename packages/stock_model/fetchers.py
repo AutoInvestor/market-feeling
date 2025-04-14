@@ -7,6 +7,7 @@ from stock_api.domain.news import News
 from stock_api.domain.news_repository import NewsRepository
 from stock_api.domain.prediction import Prediction
 
+
 class YFinanceNewsRepository(NewsRepository):
     def add_news(self, news: News):
         # Implementation for storing news locally if needed.
@@ -22,13 +23,15 @@ class YFinanceNewsRepository(NewsRepository):
         # Setup a requests session with a custom user agent
         GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
         session = requests.Session()
-        session.headers.update({
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/90.0.4430.85 Safari/537.36"
-            )
-        })
+        session.headers.update(
+            {
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/90.0.4430.85 Safari/537.36"
+                )
+            }
+        )
 
         def build_query(company_name: str) -> str:
             finance_domains_block = "domain:finance.yahoo.com"
@@ -37,7 +40,7 @@ class YFinanceNewsRepository(NewsRepository):
 
         # Use ticker as company name for this example.
         company = {"ticker": ticker_upper, "name": ticker_upper}
-        start_date_str = news_date.isoformat()   # Format: YYYY-MM-DD
+        start_date_str = news_date.isoformat()  # Format: YYYY-MM-DD
         end_date_str = start_date_str
 
         # Build parameters for GDELT query.
@@ -67,7 +70,9 @@ class YFinanceNewsRepository(NewsRepository):
                     print(f"JSON parsing failed. Response text: {response.text}")
                     raise e
         except Exception as ex:
-            print(f"Failed to fetch articles for {company['ticker']} from {start_date_str} to {end_date_str}: {ex}")
+            print(
+                f"Failed to fetch articles for {company['ticker']} from {start_date_str} to {end_date_str}: {ex}"
+            )
             articles = []
 
         news_objects = []
@@ -95,7 +100,9 @@ class YFinanceNewsRepository(NewsRepository):
                     date=art_datetime,
                     title=article.get("title", ""),
                     url=article_url,
-                    prediction=Prediction(score=0, interpretation="No prediction", percentage_range="N/A")
+                    prediction=Prediction(
+                        score=0, interpretation="No prediction", percentage_range="N/A"
+                    ),
                 )
             )
         return news_objects

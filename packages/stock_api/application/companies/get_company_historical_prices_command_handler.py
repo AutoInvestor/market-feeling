@@ -23,5 +23,7 @@ class GetCompanyHistoricalPricesCommandHandler:
         self.__repository = repository
 
     def handle(self, command: GetCompanyHistoricalPricesCommand):
-        prices = self.__repository.get_historical_prices(command.ticker, command.start, command.end)
+        prices = self.__repository.get_historical_prices(
+            command.ticker, command.start, command.end
+        )
         return HistoricalPricesSummary(ticker=command.ticker, prices=prices)

@@ -4,15 +4,18 @@ from stock_api.domain.news import News
 from stock_api.domain.news_repository import NewsRepository
 from stock_api.domain.prediction import Prediction
 
+
 @dataclass
 class GetLatestNewsCommand:
     ticker: str
+
 
 @dataclass
 class PredictionResponse:
     score: int
     interpretation: str
     percentage_range: str
+
 
 @dataclass
 class LatestNews:
@@ -22,6 +25,7 @@ class LatestNews:
     title: str
     url: str
     prediction: PredictionResponse
+
 
 class GetLatestNewsCommandHandler:
     def __init__(self, repository: NewsRepository):
@@ -36,7 +40,9 @@ class GetLatestNewsCommandHandler:
                 date=datetime.now(),
                 title="No news found",
                 url="",
-                prediction=Prediction(score=0, interpretation="No prediction", percentage_range="N/A")
+                prediction=Prediction(
+                    score=0, interpretation="No prediction", percentage_range="N/A"
+                ),
             )
 
         prediction_response = PredictionResponse(

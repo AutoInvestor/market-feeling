@@ -26,7 +26,9 @@ class YFinanceNewsRepository(NewsRepository):
             try:
                 pub_datetime = datetime.strptime(pub_date_str, "%Y-%m-%dT%H:%M:%SZ")
             except Exception as e:
-                print(f"Error parsing pubDate '{pub_date_str}' for item {item.get('id')}: {e}")
+                print(
+                    f"Error parsing pubDate '{pub_date_str}' for item {item.get('id')}: {e}"
+                )
                 continue
 
             title = content.get("title", "")
@@ -41,7 +43,9 @@ class YFinanceNewsRepository(NewsRepository):
                     date=pub_datetime,
                     title=title,
                     url=url,
-                    prediction=Prediction(score=0, interpretation="No prediction", percentage_range="N/A")
+                    prediction=Prediction(
+                        score=0, interpretation="No prediction", percentage_range="N/A"
+                    ),
                 )
             )
             print(f"Processed news item: '{title}' published at {pub_datetime}")
