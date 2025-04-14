@@ -9,7 +9,7 @@ def test_post_prediction_text():
         "/prediction/text",
         json={
             "ticker": "GOOG",
-            "news_text": "Alphabet announces record quarterly earnings.",
+            "text": "Alphabet announces record quarterly earnings.",
         },
     )
     assert response.status_code == 200

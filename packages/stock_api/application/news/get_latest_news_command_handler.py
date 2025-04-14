@@ -32,19 +32,18 @@ class GetLatestNewsCommandHandler:
         self.__repository = repository
 
     def handle(self, command: GetLatestNewsCommand) -> LatestNews:
-        # Dummy data
-        prediction = Prediction(
-            score=4, interpretation="Significant rise", percentage_range="20% to 29%"
-        )
-
-        news = News(
-            id="news123",
-            ticker=command.ticker,
-            date=datetime(2025, 4, 6, 14, 0, 0),
-            title=f"Latest news for {command.ticker}",
-            url="http://example.com/news",
-            prediction=prediction,
-        )
+        news = self.__repository.get_latest_news(command.ticker)
+        if news is None:
+            news = News(
+                id="",
+                ticker=command.ticker.upper(),
+                date=datetime.now(),
+                title="No news found",
+                url="",
+                prediction=Prediction(
+                    score=0, interpretation="No prediction", percentage_range="N/A"
+                ),
+            )
 
         prediction_response = PredictionResponse(
             score=news.prediction.score,

@@ -9,7 +9,7 @@ from stock_api.application.predictions.predict_from_text_command_handler import 
 @dataclass
 class PredictionTextRequestDTO:
     ticker: str
-    news_text: str
+    text: str
 
 
 @dataclass
@@ -41,7 +41,7 @@ class PredictFromTextController:
         return self.__router
 
     async def handle(self, request: PredictionTextRequestDTO) -> PredictionResponseDTO:
-        command = PredictFromTextCommand(request.ticker, request.news_text)
+        command = PredictFromTextCommand(request.ticker, request.text)
         prediction = self.__command_handler.handle(command)
         prediction_dto = PredictionDTO(
             score=prediction.score,

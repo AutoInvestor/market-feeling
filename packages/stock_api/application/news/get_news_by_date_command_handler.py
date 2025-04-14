@@ -39,29 +39,7 @@ class GetNewsByDateCommandHandler:
         self.__repository = repository
 
     def handle(self, command: GetNewsByDateCommand) -> NewsByDateList:
-        # Dummy data
-        prediction = Prediction(
-            score=4, interpretation="Significant rise", percentage_range="20% to 29%"
-        )
-
-        domain_news = [
-            News(
-                id="news123",
-                ticker=command.ticker,
-                date=datetime(2025, 4, 6, 14, 0, 0),
-                title=f"News A for {command.ticker}",
-                url="http://example.com/news-a",
-                prediction=prediction,
-            ),
-            News(
-                id="news124",
-                ticker=command.ticker,
-                date=datetime(2025, 4, 6, 16, 30, 0),
-                title=f"News B for {command.ticker}",
-                url="http://example.com/news-b",
-                prediction=prediction,
-            ),
-        ]
+        domain_news = self.__repository.get_news_by_date(command.ticker, command.date)
 
         summaries = [
             NewsByDate(
@@ -78,4 +56,4 @@ class GetNewsByDateCommandHandler:
             for n in domain_news
         ]
 
-        return NewsByDateList(ticker=command.ticker, list=summaries)
+        return NewsByDateList(ticker=command.ticker.upper(), list=summaries)
