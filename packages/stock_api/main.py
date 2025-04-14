@@ -30,6 +30,9 @@ from stock_api.infrastructure.repositories.in_memory_historical_price_repository
 from stock_api.infrastructure.repositories.in_memory_news_repository import (
     InMemoryNewsRepository,
 )
+from stock_api.infrastructure.repositories.yfinance_company_repository import YFinanceCompanyRepository
+from stock_api.infrastructure.repositories.yfinance_historical_price_repository import YFinanceHistoricalPriceRepository
+from stock_api.infrastructure.repositories.yfinance_news_repository import YFinanceNewsRepository
 from stock_api.presentation.companies.get_companies_controller import (
     GetCompaniesController,
 )
@@ -55,9 +58,9 @@ from stock_api.presentation.predictions.predict_from_url_controller import (
 app = FastAPI()
 
 # Composition Root Setup: instantiate repository and inject dependencies into use cases.
-company_repository = InMemoryCompanyRepository()
-historical_prices_repository = InMemoryHistoricalPriceRepository()
-news_repository = InMemoryNewsRepository()
+company_repository = YFinanceCompanyRepository()
+historical_prices_repository = YFinanceHistoricalPriceRepository()
+news_repository = YFinanceNewsRepository()
 
 get_companies_command_handler = GetCompaniesCommandHandler(company_repository)
 get_company_info_command_handler = GetCompanyInfoCommandHandler(company_repository)

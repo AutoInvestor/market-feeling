@@ -19,6 +19,6 @@ class GetCompanyInfoCommandHandler:
         self.__repository = repository
 
     def handle(self, command: GetCompanyInfoCommand) -> CompanyInfoSummary:
-        company = Company(ticker=command.ticker.upper(), name="Example Corp")
-
+        company_info = self.__repository.get_by_ticker(command.ticker)
+        company = Company(ticker=command.ticker, name=company_info.name)
         return CompanyInfoSummary(ticker=company.ticker, name=company.name)
