@@ -102,8 +102,10 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
-          docker build -t autoinvestor-market-feeling:${DOCKER_IMAGE_VERSION} .
-          docker push autoinvestor-market-feeling:${DOCKER_IMAGE_VERSION}
+          docker build \
+            -t $DOCKER_USERNAME/autoinvestor-market-feeling:${DOCKER_IMAGE_VERSION} \
+            .
+          docker push $DOCKER_USERNAME/autoinvestor-market-feeling:${DOCKER_IMAGE_VERSION}
 
       - name: Create GitHub Release
         if: steps.version_increment.outputs.bump != 'none'
@@ -122,6 +124,6 @@ jobs:
     needs: build_test_release
     if: needs.build_test_release.outputs.bump != 'none'
     with:
-      image: autoinvestor-market-feeling
+      image:   ${{ secrets.DOCKERHUB_USERNAME }}/autoinvestor-market-feeling
       version: ${{ needs.build_test_release.outputs.new-version }}
     secrets: inherit
