@@ -8,13 +8,13 @@ def test_post_prediction_text():
     response = client.post(
         "/prediction/text",
         json={
-            "ticker": "GOOG",
+            "ticker": "GOOGL",
             "text": "Alphabet announces record quarterly earnings.",
         },
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["ticker"] == "GOOG"
+    assert data["ticker"] == "GOOGL"
     assert "prediction" in data
     pred = data["prediction"]
     assert {"score", "interpretation", "percentage_range"} <= pred.keys()
