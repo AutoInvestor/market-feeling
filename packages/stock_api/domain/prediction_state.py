@@ -1,11 +1,16 @@
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
+from datetime import datetime
 
 @dataclass
-class Prediction:
+class PredictionState:
+    id: str = ""
+    ticker: str = ""
+    date: datetime = None
+    title: str = ""
+    url: str = ""
     score: int = 5
-    interpretation: str = field(init=False)
-    percentage_range: str = field(init=False)
+    interpretation: str = ""
+    percentage_range: str = ""
 
     _interpretations = {
         0: "Very sharp drop",
@@ -35,13 +40,14 @@ class Prediction:
         10: "≥ +2.5%",
     }
 
-    def __post_init__(self):
+    def apply_score(self, raw_score: float):
+        """Round, clamp, and set interpretation/range in one go."""
         try:
-            rounded = int(round(self.score))
-        except Exception:
-            raise ValueError(f"Score must be numeric (got {self.score!r})")
+            score = int(round(raw_score))
+        except TypeError:
+            raise ValueError(f"Score must be numeric (got {raw_score!r})")
+        score = max(0, min(10, score))
 
-        self.score = max(0, min(10, rounded))
-
-        self.interpretation = self._interpretations[self.score]
-        self.percentage_range = self._percentage_ranges[self.score]
+        self.score = score
+        self.interpretation = self._interpretations[score]
+        self.percentage_range = self._percentage_ranges[score]

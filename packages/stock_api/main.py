@@ -22,7 +22,11 @@ from stock_api.application.predictions.predict_from_url_command_handler import (
     PredictFromURLCommandHandler,
 )
 from stock_api.infrastructure.http_exception_handler import HttpExceptionHandler
+from stock_api.infrastructure.in_memory_domain_event_publisher import InMemoryDomainEventPublisher
 from stock_api.infrastructure.joblib_prediction_model import JoblibPredictionModel
+from stock_api.infrastructure.repositories.in_memory_event_store_repository import InMemoryEventStoreRepository
+from stock_api.infrastructure.repositories.in_memory_latest_news_read_model_repository import \
+    InMemoryLatestNewsReadModelRepository
 from stock_api.infrastructure.repositories.yfinance_company_repository import (
     YFinanceCompanyRepository,
 )
@@ -64,6 +68,10 @@ historical_prices_repository = YFinanceHistoricalPriceRepository()
 news_repository = YFinanceNewsRepository()
 prediction_model = JoblibPredictionModel("models/stock_model.joblib")
 
+event_store = InMemoryEventStoreRepository()
+read_model = InMemoryLatestNewsReadModelRepository()
+publisher = InMemoryDomainEventPublisher()
+
 get_companies_command_handler = GetCompaniesCommandHandler(company_repository)
 get_company_info_command_handler = GetCompanyInfoCommandHandler(company_repository)
 get_historical_prices_command_handler = GetCompanyHistoricalPricesCommandHandler(
@@ -76,7 +84,12 @@ predict_from_url_command_handler = PredictFromURLCommandHandler(
     company_repository, prediction_model
 )
 get_latest_news_command_handler = GetLatestNewsCommandHandler(
-    news_repository, company_repository, prediction_model
+    news_repository,
+    company_repository,
+    prediction_model,
+    event_store,
+    read_model,
+    publisher,
 )
 get_news_by_date_command_handler = GetNewsByDateCommandHandler(news_repository)
 

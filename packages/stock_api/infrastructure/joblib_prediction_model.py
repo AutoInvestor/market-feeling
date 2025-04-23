@@ -1,4 +1,3 @@
-# joblib_prediction_model.py
 import joblib
 import pandas as pd
 
@@ -7,8 +6,9 @@ from libs.finbert_analyzer import FinBertAnalyzer
 from libs.newspaper_scraper import NewspaperScraper
 from libs.spacy_analyzer import SpacySimilarityAnalyzer
 from libs.textblob_analyzer import TextBlobAnalyzer
-from stock_api.domain.prediction import Prediction
+
 from stock_api.domain.prediction_model import PredictionModel
+from stock_api.domain.raw_score import RawScore
 
 
 class JoblibPredictionModel(PredictionModel):
@@ -31,19 +31,18 @@ class JoblibPredictionModel(PredictionModel):
                 "spacy_similarity": self._sp.compute_similarity(text, company_name),
             }
         )
-        df = row_to_dataframe(features)
-        df = df[self._columns]
+        df = row_to_dataframe(features)[self._columns]
         df_scaled = pd.DataFrame(self._scaler.transform(df), columns=self._columns)
         return df_scaled
 
-    def _predict(self, text: str, company_name: str) -> Prediction:
+    def _predict(self, text: str, company_name: str) -> RawScore:
         X = self._extract_features(text, company_name)
-        raw_score = self._booster.predict(X)[0]  # scalar
-        return Prediction(raw_score)
+        raw_score = self._booster.predict(X)[0]
+        return RawScore(raw_score)
 
-    def get_prediction_from_text(self, text: str, company_name: str) -> Prediction:
+    def get_prediction_from_text(self, text: str, company_name: str) -> RawScore:
         return self._predict(text, company_name)
 
-    def get_prediction_from_url(self, url: str, company_name: str) -> Prediction:
+    def get_prediction_from_url(self, url: str, company_name: str) -> RawScore:
         article_text = self._scraper.scrape(url)
         return self._predict(article_text, company_name)
