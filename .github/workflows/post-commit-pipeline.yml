@@ -124,6 +124,6 @@ jobs:
     needs: build_test_release
     if: needs.build_test_release.outputs.bump != 'none'
     with:
-      image:   ${{ secrets.DOCKERHUB_USERNAME }}/autoinvestor-market-feeling
+      image: autoinvestor-market-feeling
       version: ${{ needs.build_test_release.outputs.new-version }}
     secrets: inherit
