@@ -5,11 +5,7 @@ from stock_model.logger import get_logger
 logger = get_logger(__name__)
 
 
-def main(start="2020-01-01", end="2024-12-31"):
-    """
-    Fetches historical prices for all companies between start and end dates and
-    saves to data/historical_prices.csv with columns: date, open, close, ticker.
-    """
+def main(start="2020-01-01", end="2025-01-01"):
     # Load tickers
     df_comp = pd.read_csv("data/companies.csv")
     tickers = df_comp["ticker"].dropna().astype(str).tolist()

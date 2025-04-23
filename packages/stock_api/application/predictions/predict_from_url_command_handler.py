@@ -1,5 +1,8 @@
 from dataclasses import dataclass
-from stock_api.domain.prediction import Prediction
+
+from stock_api.application.exceptions import NotFoundException
+from stock_api.domain.company_repository import CompanyRepository
+from stock_api.domain.prediction_model import PredictionModel
 
 
 @dataclass
@@ -17,13 +20,18 @@ class PredictionScore:
 
 
 class PredictFromURLCommandHandler:
-    def __init__(self):
-        pass
+    def __init__(self, repository: CompanyRepository, model: PredictionModel):
+        self.__repository = repository
+        self.__model = model
 
     def handle(self, command: PredictFromURLCommand) -> PredictionScore:
-        prediction = Prediction(
-            score=4, interpretation="Significant rise", percentage_range="20% to 29%"
-        )
+        company = self.__repository.get_by_ticker(command.ticker)
+
+        if company is None:
+            raise NotFoundException(f"Company '{command.ticker}' not found")
+
+        company_name = company.name
+        prediction = self.__model.get_prediction_from_url(command.url, company_name)
 
         return PredictionScore(
             ticker=command.ticker,

@@ -21,15 +21,8 @@ from stock_api.application.predictions.predict_from_text_command_handler import 
 from stock_api.application.predictions.predict_from_url_command_handler import (
     PredictFromURLCommandHandler,
 )
-from stock_api.infrastructure.repositories.in_memory_company_repository import (
-    InMemoryCompanyRepository,
-)
-from stock_api.infrastructure.repositories.in_memory_historical_price_repository import (
-    InMemoryHistoricalPriceRepository,
-)
-from stock_api.infrastructure.repositories.in_memory_news_repository import (
-    InMemoryNewsRepository,
-)
+from stock_api.infrastructure.http_exception_handler import HttpExceptionHandler
+from stock_api.infrastructure.joblib_prediction_model import JoblibPredictionModel
 from stock_api.infrastructure.repositories.yfinance_company_repository import (
     YFinanceCompanyRepository,
 )
@@ -63,19 +56,28 @@ from stock_api.presentation.predictions.predict_from_url_controller import (
 
 app = FastAPI()
 
+HttpExceptionHandler(app)
+
 # Composition Root Setup: instantiate repository and inject dependencies into use cases.
 company_repository = YFinanceCompanyRepository()
 historical_prices_repository = YFinanceHistoricalPriceRepository()
 news_repository = YFinanceNewsRepository()
+prediction_model = JoblibPredictionModel("models/stock_model.joblib")
 
 get_companies_command_handler = GetCompaniesCommandHandler(company_repository)
 get_company_info_command_handler = GetCompanyInfoCommandHandler(company_repository)
 get_historical_prices_command_handler = GetCompanyHistoricalPricesCommandHandler(
     historical_prices_repository
 )
-predict_from_text_command_handler = PredictFromTextCommandHandler()
-predict_from_url_command_handler = PredictFromURLCommandHandler()
-get_latest_news_command_handler = GetLatestNewsCommandHandler(news_repository)
+predict_from_text_command_handler = PredictFromTextCommandHandler(
+    company_repository, prediction_model
+)
+predict_from_url_command_handler = PredictFromURLCommandHandler(
+    company_repository, prediction_model
+)
+get_latest_news_command_handler = GetLatestNewsCommandHandler(
+    news_repository, company_repository, prediction_model
+)
 get_news_by_date_command_handler = GetNewsByDateCommandHandler(news_repository)
 
 # Instantiate controllers with their use-case dependencies.

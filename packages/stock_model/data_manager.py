@@ -11,15 +11,6 @@ def ensure_dir_exists(path: str):
         os.makedirs(directory, exist_ok=True)
 
 
-def save_to_csv(records: list, path: str):
-    if not records:
-        logger.info("No data to save.")
-        return
-    ensure_dir_exists(path)
-    pd.DataFrame(records).to_csv(path, index=False, encoding="utf-8")
-    logger.info(f"Saved data to {path}")
-
-
 def load_from_csv(path: str) -> pd.DataFrame:
     if not os.path.exists(path):
         logger.warning(f"File not found: {path}")

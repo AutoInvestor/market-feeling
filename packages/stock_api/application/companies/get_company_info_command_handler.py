@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+
+from stock_api.application.exceptions import NotFoundException
 from stock_api.domain.company import Company
 from stock_api.domain.company_repository import CompanyRepository
 
@@ -20,5 +22,9 @@ class GetCompanyInfoCommandHandler:
 
     def handle(self, command: GetCompanyInfoCommand) -> CompanyInfoSummary:
         company_info = self.__repository.get_by_ticker(command.ticker)
+
+        if company_info is None:
+            raise NotFoundException(f"Company '{command.ticker}' not found")
+
         company = Company(ticker=command.ticker, name=company_info.name)
         return CompanyInfoSummary(ticker=company.ticker, name=company.name)
