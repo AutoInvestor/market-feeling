@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from stock_api.application.exceptions import NotFoundException
 from stock_api.application.news.dtos import (
     GetLatestNewsCommand,
@@ -44,7 +46,18 @@ class GetLatestNewsCommandHandler:
         company = self.__company_repository.get_by_ticker(command.ticker)
         if company is None:
             logger.warning("Company not found: %s", command.ticker)
-            raise NotFoundException(f"Company '{command.ticker}' not found")
+            return LatestNews(
+                id="",
+                ticker=command.ticker,
+                date=datetime.min,
+                title="",
+                url="",
+                prediction=PredictionResponse(
+                    score=0,
+                    interpretation="",
+                    percentage_range="",
+                ),
+            )
 
         # 2) Try read model
         existing = self.__read_model.get(command.ticker)
