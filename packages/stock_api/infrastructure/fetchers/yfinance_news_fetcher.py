@@ -3,13 +3,10 @@ import yfinance as yf
 from datetime import datetime, date
 from typing import List, Optional
 from stock_api.domain.news import News
-from stock_api.domain.news_repository import NewsRepository
+from stock_api.domain.news_fetcher import NewsFetcher
 
 
-class YFinanceNewsRepository(NewsRepository):
-    def add_news(self, news: News):
-        pass
-
+class YFinanceNewsFetcher(NewsFetcher):
     def get_latest_news(self, ticker: str) -> Optional[News]:
         ticker_upper = ticker.upper()
         stock = yf.Ticker(ticker_upper)

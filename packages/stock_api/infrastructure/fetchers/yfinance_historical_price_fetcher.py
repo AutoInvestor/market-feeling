@@ -2,10 +2,10 @@ from typing import List
 import pandas as pd
 import yfinance as yf
 from stock_api.domain.historical_price import HistoricalPrice
-from stock_api.domain.historical_price_repository import HistoricalPriceRepository
+from stock_api.domain.historical_price_fetcher import HistoricalPriceFetcher
 
 
-class YFinanceHistoricalPriceRepository(HistoricalPriceRepository):
+class YFinanceHistoricalPriceFetcher(HistoricalPriceFetcher):
     def get_historical_prices(self, ticker: str, start, end) -> List[HistoricalPrice]:
         start_str = start.strftime("%Y-%m-%d")
         end_str = end.strftime("%Y-%m-%d")

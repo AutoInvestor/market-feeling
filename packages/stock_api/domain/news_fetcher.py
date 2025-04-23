@@ -4,11 +4,7 @@ from typing import List, Optional
 from stock_api.domain.news import News
 
 
-class NewsRepository(ABC):
-    @abstractmethod
-    def add_news(self, news: News):
-        pass
-
+class NewsFetcher(ABC):
     @abstractmethod
     def get_latest_news(self, ticker: str) -> Optional[News]:
         pass

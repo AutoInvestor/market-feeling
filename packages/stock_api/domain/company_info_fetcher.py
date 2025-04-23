@@ -3,7 +3,7 @@ from typing import Optional
 from stock_api.domain.company import Company
 
 
-class CompanyRepository(ABC):
+class CompanyInfoFetcher(ABC):
     @abstractmethod
     def get_all(self) -> dict[str, Company]:
         pass

@@ -1,3 +1,12 @@
 [server]
 host = "0.0.0.0"
 port = 8000
+
+[app]
+# default mode; can be overridden via ENVIRONMENT env-var or .env
+environment   = "production"
+
+# non-sensitive defaults
+mongodb_db    = "market_feeling"
+gcp_project   = "my-gcp-project"
+pubsub_topic  = "market-feeling-events"
