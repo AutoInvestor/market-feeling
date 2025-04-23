@@ -1,84 +1,112 @@
-import pandas as pd
-import numpy as np
-import joblib
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.neighbors import KNeighborsRegressor
+from pathlib import Path
 
+import joblib
+import lightgbm as lgb
+import numpy as np
+import optuna
+import pandas as pd
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import StandardScaler
 from stock_model.logger import get_logger
 
 logger = get_logger(__name__)
 
 
-def wMAPE(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    return np.sum(np.abs(y_true - y_pred)) / np.sum(np.abs(y_true)) * 100
+def _weights(y: np.ndarray) -> np.ndarray:
+    """Sample weights that make MAE ≈ wMAPE (1 / max(1, |y|))."""
+    return 1.0 / np.maximum(1.0, np.abs(y))
 
 
-def train(
-    data_csv: str, output_path: str, test_size: float = 0.3, random_state: int = 42
-):
-    logger.info(f"Starting training run on data: {data_csv}")
-    # 1) Load
-    try:
-        df = pd.read_csv(data_csv)
-    except Exception as e:
-        logger.exception(f"Failed to read CSV {data_csv}")
-        raise
+def wmape(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    return np.mean(np.abs(y_true - y_pred) * _weights(y_true)) * 100
 
-    if "target" not in df.columns:
-        logger.error("Expected 'target' column in training data, but it was not found")
-        raise ValueError("Expected 'target' column in training data")
 
-    X = df.drop(columns=["target"])
-    y = df["target"].values
-    logger.debug(f"Data loaded: {X.shape[0]} samples, {X.shape[1]} features")
+def lgbm_wmape(preds: np.ndarray, dataset: lgb.Dataset):
+    y_true = dataset.get_label()
+    score = wmape(y_true, np.rint(preds))
+    return "wMAPE", score, False  # lower is better
 
-    # 2) Split once
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=random_state
-    )
-    logger.info(
-        f"Split data: train={X_train.shape[0]} rows, test={X_test.shape[0]} rows"
-    )
 
-    # 3) Define candidate models
-    candidates = {
-        "LinearRegression": LinearRegression(),
-        "Ridge": Ridge(random_state=random_state),
-        "Lasso": Lasso(random_state=random_state),
-        "DecisionTree": DecisionTreeRegressor(random_state=random_state),
-        "RandomForest": RandomForestRegressor(
-            n_estimators=100, random_state=random_state
-        ),
-        "GradientBoosting": GradientBoostingRegressor(
-            n_estimators=100, random_state=random_state
-        ),
-        "KNN": KNeighborsRegressor(),
+def _objective(trial: optuna.Trial, X: pd.DataFrame, y: pd.Series, cv: StratifiedKFold):
+    params = {
+        "objective": "regression_l1",  # MAE
+        "metric": "None",  # we'll use custom metric
+        "learning_rate": trial.suggest_float("lr", 0.01, 0.1, log=True),
+        "num_leaves": trial.suggest_int("num_leaves", 15, 63, step=2),
+        "feature_fraction": trial.suggest_float("feature_fraction", 0.6, 1.0),
+        "bagging_fraction": trial.suggest_float("bagging_fraction", 0.6, 1.0),
+        "bagging_freq": trial.suggest_int("bagging_freq", 1, 8),
+        "min_child_samples": trial.suggest_int("min_child_samples", 10, 60),
+        "lambda_l1": trial.suggest_float("lambda_l1", 0.0, 5.0),
+        "lambda_l2": trial.suggest_float("lambda_l2", 0.0, 5.0),
+        "verbosity": -1,
+        "seed": 42,
     }
 
-    results = {}
-    for name, model in candidates.items():
-        logger.info(f"Training model: {name}")
-        try:
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
-            score = wMAPE(y_test, y_pred)
-            results[name] = score
-            logger.info(f"{name:17s} wMAPE: {score:6.2f}%")
-        except Exception as e:
-            logger.exception(f"Error training or scoring model '{name}'")
-            results[name] = np.inf
+    oof = np.zeros(len(y))
+    for tr_idx, val_idx in cv.split(X, y):
+        w_tr = _weights(y.iloc[tr_idx])
+        w_val = _weights(y.iloc[val_idx])
 
-    # 4) Pick best
-    best_name = min(results, key=results.get)
-    best_score = results[best_name]
-    best_model = candidates[best_name]
+        booster = lgb.train(
+            params,
+            lgb.Dataset(X.iloc[tr_idx], y.iloc[tr_idx], weight=w_tr),
+            num_boost_round=4000,
+            valid_sets=[lgb.Dataset(X.iloc[val_idx], y.iloc[val_idx], weight=w_val)],
+            callbacks=[
+                lgb.early_stopping(200, verbose=False),
+                lgb.log_evaluation(period=0),
+            ],
+            feval=lgbm_wmape,
+        )
+        oof[val_idx] = booster.predict(X.iloc[val_idx])
 
-    logger.info(f"Best model selected: {best_name} with wMAPE = {best_score:.2f}%")
+    return wmape(y, oof)
 
-    joblib.dump(best_model, output_path)
-    logger.info(f"Saved best model '{best_name}' to {output_path}")
 
-    return best_name, best_model, results
+def train(data_csv: str, model_path: str, n_trials: int = 50):
+    logger.info("Training model (wMAPE‑optimised) ...")
+    df = pd.read_csv(data_csv)
+    X = df.drop(columns=["target"])
+    y = df["target"].astype(int)
+
+    scaler = StandardScaler()
+    X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
+
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+    study = optuna.create_study(direction="minimize")
+    study.optimize(
+        lambda t: _objective(t, X_scaled, y, cv),
+        n_trials=n_trials,
+        show_progress_bar=True,
+    )
+
+    logger.info(f"Best CV wMAPE: {study.best_value:.3f}%")
+
+    # retrain on full data with best params & weights
+    best_params = {
+        **study.best_params,
+        "objective": "regression_l1",
+        "metric": "None",
+        "verbosity": -1,
+        "seed": 42,
+    }
+    full_weights = _weights(y)
+    booster = lgb.train(
+        best_params,
+        lgb.Dataset(X_scaled, y, weight=full_weights),
+        num_boost_round=int(
+            1.1 * booster.best_iteration
+            if (booster := study.best_trial.user_attrs.get("booster"))
+            else 1500
+        ),
+        feval=lgbm_wmape,
+        callbacks=[lgb.log_evaluation(period=100)],
+    )
+
+    Path(model_path).parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(
+        {"model": booster, "scaler": scaler, "columns": X.columns.tolist()}, model_path
+    )
+    logger.info(f"Model saved → {model_path}")

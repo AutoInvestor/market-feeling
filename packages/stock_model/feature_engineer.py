@@ -1,110 +1,63 @@
 import re
+
+import numpy as np
 import pandas as pd
-from stock_model.data_manager import save_to_csv
+
+from libs.feature_builder import batch_transform
 from stock_model.logger import get_logger
 
 logger = get_logger(__name__)
 
 
-def engineer(input_csv: str, output_csv: str):
-    # 1) Load
-    df_news = pd.read_csv(input_csv, parse_dates=["date"])
-    df_prices = pd.read_csv("data/historical_prices.csv", parse_dates=["date"])
+def engineer(news_csv: str, prices_csv: str, output_csv: str) -> None:
+    logger.info("Starting feature engineering …")
 
-    # 2) Compute 1-day return
+    df_news = pd.read_csv(news_csv, parse_dates=["date"])
+    df_prices = pd.read_csv(prices_csv, parse_dates=["date"])
+
+    # 1. One-day forward return
     df_prices.sort_values(["ticker", "date"], inplace=True)
     df_prices["return_1d"] = (
-        df_prices.groupby("ticker")["close"]
-        .shift(-1)
-        .subtract(df_prices["close"])
-        .divide(df_prices["close"])
-    )
+        df_prices.groupby("ticker")["close"].shift(-1) - df_prices["close"]
+    ) / df_prices["close"]
 
-    # 3) Merge & drop missing returns
-    merged = pd.merge(
-        df_news,
-        df_prices[["ticker", "date", "return_1d"]],
-        on=["ticker", "date"],
-        how="left",
-    )
-    before = len(merged)
-    merged = merged.dropna(subset=["return_1d"])
-    logger.info(f"Dropped {before - len(merged)} rows without a return_1d")
+    # 2. Merge and keep rows that have a future close price
+    merged = df_news.merge(
+        df_prices[["ticker", "date", "return_1d"]], on=["ticker", "date"], how="left"
+    ).dropna(subset=["return_1d"])
 
-    # 4) Drop rows with invalid text
-    invalid_phrases = [
+    # 3. Remove Yahoo placeholder rows (“Sign in” etc.)
+    bad_phrases = [
         "We're unable to load stories right now.",
         "Sign in to access your portfolio",
         "Sign in",
     ]
-    pattern = "|".join(map(re.escape, invalid_phrases))
-    mask_bad_text = merged["text"].str.contains(pattern, na=False)
-    if mask_bad_text.any():
-        logger.info(f"Dropping {mask_bad_text.sum()} rows with invalid text")
-        merged = merged[~mask_bad_text]
-
-    # 5) Drop rows with out‑of‑range sentiment scores/labels
-    valid_labels = {"Positive", "Negative", "Neutral"}
-    mask_valid = (
-        merged["textblob_polarity"].between(-1.0, 1.0)
-        & merged["textblob_subjectivity"].between(0.0, 1.0)
-        & merged["finbert_label"].isin(valid_labels)
-        & merged["finbert_score"].between(0.0, 1.0)
-        & merged["spacy_similarity"].between(0.0, 1.0)
-    )
-    if (~mask_valid).any():
-        logger.info(
-            f"Dropping {(~mask_valid).sum()} rows with invalid sentiment scores"
-        )
-        merged = merged[mask_valid]
-
-    # 6) Feature engineering
-    merged["abs_polarity"] = merged["textblob_polarity"].abs()
-    merged["polarity_subjectivity"] = (
-        merged["textblob_polarity"] * merged["textblob_subjectivity"]
-    )
-    finbert_dummies = pd.get_dummies(merged["finbert_label"], prefix="finbert")
-    merged = pd.concat([merged, finbert_dummies], axis=1)
-
-    # 7) Target: 11‑class 0…10 per the percentages in your image
-    def cls11(r):
-        if r <= -0.05:
-            return 0  # ≤ -5%
-        elif r <= -0.04:
-            return 1  # -5% to -4%
-        elif r <= -0.03:
-            return 2  # -4% to -3%
-        elif r <= -0.02:
-            return 3  # -3% to -2%
-        elif r <= -0.01:
-            return 4  # -2% to -1%
-        elif abs(r) <= 0.01:
-            return 5  # ±1%
-        elif r <= 0.02:
-            return 6  # +1% to +2%
-        elif r <= 0.03:
-            return 7  # +2% to +3%
-        elif r <= 0.04:
-            return 8  # +3% to +4%
-        elif r <= 0.05:
-            return 9  # +4% to +5%
-        else:
-            return 10  # ≥ +5%
-
-    merged["target"] = merged["return_1d"].apply(cls11)
-
-    # 8) Keep only the columns you need for training
-    cols_to_keep = [
-        "abs_polarity",
-        "polarity_subjectivity",
-        "spacy_similarity",
-        "finbert_Negative",
-        "finbert_Neutral",
-        "finbert_Positive",
-        "target",
+    merged = merged[
+        ~merged["text"].str.contains("|".join(map(re.escape, bad_phrases)), na=False)
     ]
-    final_df = merged[cols_to_keep]
 
-    # 9) Save
-    save_to_csv(final_df.to_dict("records"), output_csv)
-    logger.info(f"Feature-engineered data saved to {output_csv}")
+    # 4. Sentiment sanity-check ranges
+    ok = (
+        merged["textblob_polarity"].between(-1, 1)
+        & merged["textblob_subjectivity"].between(0, 1)
+        & merged["finbert_score"].between(0, 1)
+        & merged["spacy_similarity"].between(0, 1)
+    )
+    merged = merged[ok]
+
+    # 5. Build feature matrix (handled by the shared helper)
+    feat_df = batch_transform(merged)
+
+    # 6. Target: 11-class ordinal bucketing
+    thresholds = np.array(
+        [-0.025, -0.02, -0.015, -0.01, -0.005, 0.005, 0.01, 0.015, 0.02, 0.025]
+    )
+    feat_df["target"] = np.searchsorted(
+        thresholds, merged["return_1d"].values, side="right"
+    )
+
+    # 7. Save to disk
+    feat_df.to_csv(output_csv, index=False)
+    logger.info(
+        f"Feature-engineered CSV written to {output_csv}  ({len(feat_df)} rows)"
+    )

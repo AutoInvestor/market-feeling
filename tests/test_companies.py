@@ -38,8 +38,8 @@ def test_get_historical_prices():
 
 
 def test_get_company_info_not_found():
-    # response = client.get("/companies/UNKNOWN")
-    # assert response.status_code == 404
+    response = client.get("/companies/UNKNOWN")
+    assert response.status_code == 404
     pass
 
 

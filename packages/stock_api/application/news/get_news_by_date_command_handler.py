@@ -39,21 +39,21 @@ class GetNewsByDateCommandHandler:
         self.__repository = repository
 
     def handle(self, command: GetNewsByDateCommand) -> NewsByDateList:
-        domain_news = self.__repository.get_news_by_date(command.ticker, command.date)
+        news = News()
+        prediction = Prediction()
 
         summaries = [
             NewsByDate(
-                id=n.id,
-                date=n.date.date(),
-                title=n.title,
-                url=n.url,
+                id=news.id,
+                date=news.date,
+                title=news.title,
+                url=news.url,
                 prediction=PredictionResponse(
-                    score=n.prediction.score,
-                    interpretation=n.prediction.interpretation,
-                    percentage_range=n.prediction.percentage_range,
+                    score=prediction.score,
+                    interpretation=prediction.interpretation,
+                    percentage_range=prediction.percentage_range,
                 ),
             )
-            for n in domain_news
         ]
 
-        return NewsByDateList(ticker=command.ticker.upper(), list=summaries)
+        return NewsByDateList(command.ticker, summaries)

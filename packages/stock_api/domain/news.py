@@ -1,13 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from stock_api.domain.prediction import Prediction
 
 
 @dataclass
 class News:
-    id: str
-    ticker: str
-    date: datetime
-    title: str
-    url: str
-    prediction: Prediction
+    id: str = ""
+    ticker: str = ""
+    date: datetime = field(default_factory=datetime.now)
+    title: str = "No news found"
+    url: str = ""

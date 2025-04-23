@@ -8,13 +8,24 @@ from stock_model.logger import get_logger
 from stock_model.data_manager import ensure_dir_exists
 from stock_model.fetchers.yfinance_fetcher import YFinanceFetcher
 from stock_model.fetchers.gdelt_fetcher import GdeltFetcher
-from stock_model.analyzers.textblob_analyzer import TextBlobAnalyzer
-from stock_model.analyzers.finbert_analyzer import FinBertAnalyzer
-from stock_model.analyzers.spacy_analyzer import SpacySimilarityAnalyzer
-from stock_model.scrapers.NewspaperScraper import NewspaperScraper
+from libs.textblob_analyzer import TextBlobAnalyzer
+from libs.finbert_analyzer import FinBertAnalyzer
+from libs.spacy_analyzer import SpacySimilarityAnalyzer
+from libs.newspaper_scraper import NewspaperScraper
 
 logger = get_logger(__name__)
-NASDAQ100 = ["AAPL", "MDB", "GOOGL"]
+NASDAQ100 = [
+    "AAPL",  # Apple Inc.
+    "MSFT",  # Microsoft Corporation
+    "AMZN",  # Amazon.com, Inc.
+    "GOOGL",  # Alphabet Inc. (Class A)
+    "NVDA",  # NVIDIA Corporation
+    "META",  # Meta Platforms, Inc.
+    "TSLA",  # Tesla, Inc.
+    "AVGO",  # Broadcom Inc.
+    "ADBE",  # Adobe Inc.
+    "AMD",  # Advanced Micro Devices, Inc.
+]
 
 
 def fetch_companies_csv(path: str):

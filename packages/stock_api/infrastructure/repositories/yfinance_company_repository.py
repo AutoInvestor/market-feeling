@@ -11,7 +11,6 @@ class YFinanceCompanyRepository(CompanyRepository):
             "MSFT",  # Microsoft Corporation
             "AMZN",  # Amazon.com, Inc.
             "GOOGL",  # Alphabet Inc.
-            "FB",  # Meta Platforms, Inc.
             "NVDA",  # NVIDIA Corporation
             "TSLA",  # Tesla, Inc.
             "NFLX",  # Netflix, Inc.
