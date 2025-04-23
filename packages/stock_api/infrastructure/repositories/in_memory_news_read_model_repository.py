@@ -1,9 +1,10 @@
 from stock_api.application.news.dtos import LatestNews
-from stock_api.application.news.latest_news_read_model_repository import (
-    LatestNewsReadModelRepository,
+from stock_api.application.news.news_read_model_repository import (
+    NewsReadModelRepository,
 )
 
-class InMemoryLatestNewsReadModelRepository(LatestNewsReadModelRepository):
+
+class InMemoryNewsReadModelRepository(NewsReadModelRepository):
     def __init__(self):
         self._storage: dict[str, LatestNews] = {}
 

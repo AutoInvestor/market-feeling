@@ -1,10 +1,10 @@
 import yfinance as yf
 from typing import Optional, Dict
 from stock_api.domain.company import Company
-from stock_api.domain.company_repository import CompanyRepository
+from stock_api.domain.company_info_fetcher import CompanyInfoFetcher
 
 
-class YFinanceCompanyRepository(CompanyRepository):
+class YFinanceCompanyInfoFetcher(CompanyInfoFetcher):
     def __init__(self):
         self.__tickers = [
             "AAPL",  # Apple Inc.

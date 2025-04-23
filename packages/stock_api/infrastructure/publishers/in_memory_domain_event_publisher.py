@@ -4,6 +4,7 @@ from stock_api.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class InMemoryDomainEventPublisher(DomainEventPublisher):
     def __init__(self):
         self.published_events: list[DomainEvent] = []

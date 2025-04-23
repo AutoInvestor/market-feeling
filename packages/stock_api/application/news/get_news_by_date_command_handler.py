@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from datetime import date
 from typing import List
-from stock_api.domain.news import News
-from stock_api.domain.news_repository import NewsRepository
+from stock_api.domain.news_fetcher import NewsFetcher
 
 
 @dataclass
@@ -34,7 +33,7 @@ class NewsByDateList:
 
 
 class GetNewsByDateCommandHandler:
-    def __init__(self, repository: NewsRepository):
+    def __init__(self, repository: NewsFetcher):
         self.__repository = repository
 
     def handle(self, command: GetNewsByDateCommand) -> NewsByDateList:

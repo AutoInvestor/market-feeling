@@ -1,6 +1,7 @@
 import uuid, time
 from dataclasses import dataclass
 
+
 @dataclass
 class DomainEvent:
     event_id: str
@@ -10,10 +11,9 @@ class DomainEvent:
     type: str
     payload: dict
 
+
 def make_asset_feeling_detected_event(
-    aggregate_id: str,
-    version: int,
-    payload: dict
+    aggregate_id: str, version: int, payload: dict
 ) -> DomainEvent:
     return DomainEvent(
         event_id=str(uuid.uuid4()),

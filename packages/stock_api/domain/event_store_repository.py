@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 from stock_api.domain.events import DomainEvent
 
+
 class EventStoreRepository(ABC):
     @abstractmethod
     def append(self, event: DomainEvent) -> None:

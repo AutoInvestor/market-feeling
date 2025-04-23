@@ -1,6 +1,7 @@
 from typing import List
 from stock_api.domain.events import DomainEvent
 
+
 class EventSourcedEntity:
     def __init__(self, stream: List[DomainEvent] = None):
         self._uncommitted_events: List[DomainEvent] = []

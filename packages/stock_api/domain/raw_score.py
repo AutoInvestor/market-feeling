@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class RawScore:
     """
     A value object holding a single integer 0–10.
     Rounds+clamps any numeric input into that range.
     """
+
     value: int
 
     def __init__(self, raw: float):

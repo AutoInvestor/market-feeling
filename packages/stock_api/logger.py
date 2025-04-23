@@ -1,6 +1,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
+
 def get_logger(
     name: str = __name__,
     logfile: str = "market_feeling.log",

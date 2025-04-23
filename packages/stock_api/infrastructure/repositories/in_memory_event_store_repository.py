@@ -1,6 +1,7 @@
 from stock_api.domain.event_store_repository import EventStoreRepository
 from stock_api.domain.events import DomainEvent
 
+
 class InMemoryEventStoreRepository(EventStoreRepository):
     def __init__(self):
         self._events: dict[str, list[DomainEvent]] = {}

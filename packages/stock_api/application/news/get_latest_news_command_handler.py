@@ -1,10 +1,16 @@
 from stock_api.application.exceptions import NotFoundException
-from stock_api.application.news.dtos import GetLatestNewsCommand, LatestNews, PredictionResponse
-from stock_api.domain.company_repository import CompanyRepository
-from stock_api.domain.news_repository import NewsRepository
+from stock_api.application.news.dtos import (
+    GetLatestNewsCommand,
+    LatestNews,
+    PredictionResponse,
+)
+from stock_api.domain.company_info_fetcher import CompanyInfoFetcher
+from stock_api.domain.news_fetcher import NewsFetcher
 from stock_api.domain.prediction_model import PredictionModel
 from stock_api.domain.event_store_repository import EventStoreRepository
-from stock_api.application.news.latest_news_read_model_repository import LatestNewsReadModelRepository
+from stock_api.application.news.news_read_model_repository import (
+    NewsReadModelRepository,
+)
 from stock_api.domain.event_publisher import DomainEventPublisher
 from stock_api.domain.prediction_aggregate import PredictionAggregate
 from stock_api.domain.prediction_state import PredictionState
@@ -13,14 +19,15 @@ from stock_api.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class GetLatestNewsCommandHandler:
     def __init__(
         self,
-        news_repository: NewsRepository,
-        company_repository: CompanyRepository,
+        news_repository: NewsFetcher,
+        company_repository: CompanyInfoFetcher,
         model: PredictionModel,
         event_store: EventStoreRepository,
-        read_model: LatestNewsReadModelRepository,
+        read_model: NewsReadModelRepository,
         publisher: DomainEventPublisher,
     ):
         self.__news_repository = news_repository
@@ -67,16 +74,18 @@ class GetLatestNewsCommandHandler:
             percentage_range=temp.percentage_range,
         )
         latest_news = LatestNews(
-            id=news.id, ticker=news.ticker, date=news.date,
-            title=news.title, url=news.url, prediction=pred_resp,
+            id=news.id,
+            ticker=news.ticker,
+            date=news.date,
+            title=news.title,
+            url=news.url,
+            prediction=pred_resp,
         )
 
         # 6) Event‐sourcing: feed the pure integer into the aggregate
         past = self.__event_store.get_events(latest_news.id)
         logger.debug("Found %d past events", len(past))
-        agg  = PredictionAggregate.detect(
-            latest_news, past, raw_score.value
-        )
+        agg = PredictionAggregate.detect(latest_news, past, raw_score.value)
 
         # 7) persist & publish
         for evt in agg.get_uncommitted_events():

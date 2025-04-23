@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 
 from stock_api.application.exceptions import NotFoundException
-from stock_api.domain.company_repository import CompanyRepository
+from stock_api.domain.company_info_fetcher import CompanyInfoFetcher
 from stock_api.domain.prediction_model import PredictionModel
 from stock_api.domain.prediction_state import PredictionState
 from stock_api.domain.raw_score import RawScore
 from stock_api.logger import get_logger
 
 logger = get_logger(__name__)
+
 
 @dataclass
 class PredictFromTextCommand:
@@ -24,7 +25,7 @@ class PredictionScore:
 
 
 class PredictFromTextCommandHandler:
-    def __init__(self, repository: CompanyRepository, model: PredictionModel):
+    def __init__(self, repository: CompanyInfoFetcher, model: PredictionModel):
         self.__repository = repository
         self.__model = model
 
@@ -56,6 +57,8 @@ class PredictFromTextCommandHandler:
         )
         logger.info(
             "PredictFromText result for %s → score=%d, interp=%s",
-            command.ticker, state.score, state.interpretation
+            command.ticker,
+            state.score,
+            state.interpretation,
         )
         return result
