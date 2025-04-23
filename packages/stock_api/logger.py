@@ -17,12 +17,6 @@ def get_logger(
     if not logger.handlers:
         fmt = logging.Formatter("[%(asctime)s] %(levelname)-8s %(name)s - %(message)s")
 
-        # Console handler
-        ch = logging.StreamHandler()
-        ch.setLevel(level)
-        ch.setFormatter(fmt)
-        logger.addHandler(ch)
-
         # File handler (rotates at max_bytes, keeps backup_count files)
         fh = RotatingFileHandler(logfile, maxBytes=max_bytes, backupCount=backup_count)
         fh.setLevel(level)
