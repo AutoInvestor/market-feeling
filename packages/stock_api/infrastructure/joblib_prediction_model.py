@@ -1,4 +1,3 @@
-# stock_api/infrastructure/joblib_prediction_model.py
 import joblib
 import pandas as pd
 

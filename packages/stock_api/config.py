@@ -17,13 +17,11 @@ _toml = load_toml_config()
 
 
 class Settings(BaseSettings):
-    # mode: "testing" = in-memory; otherwise "production"
     ENVIRONMENT: str = Field(
         _toml.get("app", {}).get("environment", "production"),
         env="ENVIRONMENT",
     )
 
-    # server listen settings
     HOST: str = Field(
         _toml.get("server", {}).get("host", "0.0.0.0"),
         env="HOST",
