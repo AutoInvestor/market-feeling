@@ -6,6 +6,7 @@ from stock_api.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class PubSubEventPublisher(DomainEventPublisher):
     def __init__(self, project_id: str | None, topic: str | None):
         """
@@ -36,12 +37,12 @@ class PubSubEventPublisher(DomainEventPublisher):
 
         message = json.dumps(
             {
-                "eventId":      event.event_id,
-                "occurredAt":   event.occurred_at,
-                "aggregateId":  event.aggregate_id,
-                "version":      event.version,
-                "type":         event.type,
-                "payload":      event.payload,
+                "eventId": event.event_id,
+                "occurredAt": event.occurred_at,
+                "aggregateId": event.aggregate_id,
+                "version": event.version,
+                "type": event.type,
+                "payload": event.payload,
             }
         ).encode("utf-8")
 

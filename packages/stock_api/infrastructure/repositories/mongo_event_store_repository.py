@@ -5,6 +5,7 @@ from stock_api.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class MongoEventStoreRepository(EventStoreRepository):
     def __init__(self, uri: str | None, db_name: str):
         """
@@ -14,7 +15,9 @@ class MongoEventStoreRepository(EventStoreRepository):
         """
         self._enabled = bool(uri)
         if not self._enabled:
-            logger.warning("No MONGODB_URI provided: MongoEventStoreRepository disabled, using dummy behavior.")
+            logger.warning(
+                "No MONGODB_URI provided: MongoEventStoreRepository disabled, using dummy behavior."
+            )
             return
 
         # real mongo setup
@@ -27,12 +30,12 @@ class MongoEventStoreRepository(EventStoreRepository):
             return
 
         doc = {
-            "_id":          event.event_id,
-            "occurred_at":  event.occurred_at,
+            "_id": event.event_id,
+            "occurred_at": event.occurred_at,
             "aggregate_id": event.aggregate_id,
-            "version":      event.version,
-            "type":         event.type,
-            "payload":      event.payload,
+            "version": event.version,
+            "type": event.type,
+            "payload": event.payload,
         }
         self._coll.insert_one(doc)
 
@@ -41,18 +44,15 @@ class MongoEventStoreRepository(EventStoreRepository):
             # dummy: always return empty history
             return []
 
-        cursor = (
-            self._coll.find({"aggregate_id": aggregate_id})
-                      .sort("version", 1)
-        )
+        cursor = self._coll.find({"aggregate_id": aggregate_id}).sort("version", 1)
         return [
             DomainEvent(
-                event_id=     doc["_id"],
-                occurred_at=  doc["occurred_at"],
-                aggregate_id= doc["aggregate_id"],
-                version=      doc["version"],
-                type=         doc["type"],
-                payload=      doc["payload"],
+                event_id=doc["_id"],
+                occurred_at=doc["occurred_at"],
+                aggregate_id=doc["aggregate_id"],
+                version=doc["version"],
+                type=doc["type"],
+                payload=doc["payload"],
             )
             for doc in cursor
         ]

@@ -1,10 +1,13 @@
 from datetime import datetime
 from pymongo import MongoClient
-from stock_api.application.news.news_read_model_repository import NewsReadModelRepository
+from stock_api.application.news.news_read_model_repository import (
+    NewsReadModelRepository,
+)
 from stock_api.application.news.dtos import LatestNews, PredictionResponse
 from stock_api.logger import get_logger
 
 logger = get_logger(__name__)
+
 
 class MongoNewsReadModelRepository(NewsReadModelRepository):
     def __init__(self, uri: str | None, db_name: str):
