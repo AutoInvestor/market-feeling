@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build_test_release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest-large
     outputs:
       new-version: ${{ steps.calculate_version.outputs.NEW_VERSION }}
       bump: ${{ steps.version_increment.outputs.bump }}
@@ -93,6 +93,12 @@ jobs:
 
       - name: Check formatting
         run: poetry run black . --check
+
+      - name: Free disk space on runner
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo docker image prune --all --force || true
+          df -h
 
       - name: Build & push docker image
         if: steps.version_increment.outputs.bump != 'none'
