@@ -1,9 +1,9 @@
 from pymongo import MongoClient
 from stock_api.domain.event_store_repository import EventStoreRepository
 from stock_api.domain.events import DomainEvent
-import logging
+from stock_api.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class MongoEventStoreRepository(EventStoreRepository):
     def __init__(self, uri: str | None, db_name: str):

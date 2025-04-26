@@ -1,10 +1,10 @@
 import json
-import logging
 from google.cloud import pubsub_v1
 from stock_api.domain.event_publisher import DomainEventPublisher
 from stock_api.domain.events import DomainEvent
+from stock_api.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class PubSubEventPublisher(DomainEventPublisher):
     def __init__(self, project_id: str | None, topic: str | None):
