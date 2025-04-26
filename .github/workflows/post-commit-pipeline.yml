@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build_test_release:
-    runs-on: ubuntu-latest-large
+    runs-on: ubuntu-22.04
     outputs:
       new-version: ${{ steps.calculate_version.outputs.NEW_VERSION }}
       bump: ${{ steps.version_increment.outputs.bump }}
