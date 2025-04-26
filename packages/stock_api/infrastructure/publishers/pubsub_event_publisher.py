@@ -1,4 +1,3 @@
-# stock_api/infrastructure/pubsub_event_publisher.py
 import json
 from google.cloud import pubsub_v1
 from stock_api.domain.event_publisher import DomainEventPublisher

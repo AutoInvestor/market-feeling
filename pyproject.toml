@@ -42,6 +42,9 @@ en-core-web-md            = { url = "https://github.com/explosion/spacy-models/r
 numpy                     = ">=1.24,<2.0"
 pandas                    = "^2.0.3"
 joblib                    = "^1.1.0"
+lightgbm                  = "^4.3.0"
+scikit-learn              = "^1.2.2"
+torch                     = "^2.6.0"
 
 [tool.poetry.group.dev.dependencies]
 # Testing & linting
@@ -50,10 +53,7 @@ black                     = "^24.3.0"
 mypy                      = "^1.5.1"
 
 # Data science / model training (only for local dev)
-scikit-learn              = "^1.2.2"
-lightgbm                  = "^4.3.0"
 optuna                    = "^3.6.0"
-torch                     = "^2.6.0"
 
 [tool.black]
 line-length   = 88
