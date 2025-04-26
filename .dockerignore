@@ -1,0 +1,6 @@
+.git
+**/__pycache__/
+*.ipynb
+*.md
+tests/
+data/
