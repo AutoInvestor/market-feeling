@@ -1,8 +1,6 @@
 import warnings
 import spacy
-from stock_model.logger import get_logger
 
-logger = get_logger(__name__)
 
 # Suppress spaCy W008 warnings about empty vectors
 warnings.filterwarnings(
@@ -19,7 +17,6 @@ class SpacySimilarityAnalyzer:
         try:
             self.nlp = spacy.load(model)
         except Exception as e:
-            logger.error(f"Failed to load spaCy model '{model}': {e}")
             raise
 
     def compute_similarity(self, t1: str, t2: str) -> float:
@@ -31,5 +28,4 @@ class SpacySimilarityAnalyzer:
                 return 0.0
             return doc1.similarity(doc2)
         except Exception as e:
-            logger.warning(f"spaCy similarity computation failed: {e}")
             return 0.0

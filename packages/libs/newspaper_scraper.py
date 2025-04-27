@@ -1,7 +1,4 @@
-import logging
 import newspaper
-
-logger = logging.getLogger(__name__)
 
 
 class NewspaperScraper:
