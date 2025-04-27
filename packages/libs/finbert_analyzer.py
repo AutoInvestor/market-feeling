@@ -1,7 +1,4 @@
 from transformers import pipeline
-from stock_model.logger import get_logger
-
-logger = get_logger(__name__)
 
 
 # FINBERT:
@@ -27,5 +24,4 @@ class FinBertAnalyzer:
             r = self.pipe(text)[0]
             return {"finbert_label": r["label"], "finbert_score": r["score"]}
         except Exception as e:
-            logger.warning(f"FinBERT failed: {e}")
             return {"finbert_label": None, "finbert_score": None}

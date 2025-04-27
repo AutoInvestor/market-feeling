@@ -72,11 +72,15 @@ from stock_api.presentation.predictions.predict_from_text_controller import (
 from stock_api.presentation.predictions.predict_from_url_controller import (
     PredictFromURLController,
 )
+from stock_api.scheduler import setup_scheduler
 
 app = FastAPI()
 
 logger = get_logger(__name__)
 logger.info("Starting up in %s mode", settings.ENVIRONMENT)
+
+# Cron job.
+setup_scheduler(app)
 
 # Exceptions Handler.
 HttpExceptionHandler(app)
@@ -147,4 +151,4 @@ app.include_router(latest_news_controller.router)
 app.include_router(news_by_date_controller.router)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host="0.0.0.0", port=8080, access_log=False, log_level="critical")

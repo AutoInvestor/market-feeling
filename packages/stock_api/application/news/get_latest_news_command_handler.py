@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from stock_api.application.exceptions import NotFoundException
 from stock_api.application.news.dtos import (
     GetLatestNewsCommand,
@@ -10,6 +9,7 @@ from stock_api.domain.company_info_fetcher import CompanyInfoFetcher
 from stock_api.domain.news_fetcher import NewsFetcher
 from stock_api.domain.prediction_model import PredictionModel
 from stock_api.domain.event_store_repository import EventStoreRepository
+from stock_api.domain.exceptions import ConcurrencyError
 from stock_api.application.news.news_read_model_repository import (
     NewsReadModelRepository,
 )
@@ -71,16 +71,47 @@ class GetLatestNewsCommandHandler:
             logger.warning("No news found for %s", command.ticker)
             raise NotFoundException(f"No news found for '{command.ticker}'")
 
-        # 4) Get only a RawScore VO:
+        # 4) Get only a RawScore VO
         raw_score: RawScore = self.__model.get_prediction_from_url(
             news.url, company.name
         )
-        logger.info("Predicted raw score=%d for news id=%s", raw_score.value, news.id)
+        logger.info(
+            "Predicted raw score=%d for news id=%s",
+            raw_score.value,
+            news.id,
+        )
 
-        # 5) Build DTO
+        # 5) Build in‐memory state
         temp = PredictionState()
         temp.apply_score(raw_score.value)
 
+        # 6) Event‐sourcing: rehydrate & detect
+        past = self.__event_store.get_events(news.id)
+
+        agg = PredictionAggregate.detect(news, past, raw_score.value)
+        expected_version = len(past)
+
+        # 7) persist & publish with optimistic concurrency
+        uncommitted = agg.get_uncommitted_events()
+        try:
+            for evt in uncommitted:
+                self.__event_store.append(
+                    aggregate_id=news.id,
+                    events=[evt],
+                    expected_version=expected_version,
+                )
+                self.__publisher.publish(evt)
+                expected_version += 1
+        except ConcurrencyError:
+            logger.info(
+                "Concurrency conflict on news.id=%s: another pod already wrote; skipping",
+                news.id,
+            )
+            return self.__read_model.get(command.ticker)
+
+        agg.mark_events_as_committed()
+
+        # 8) update read model
         pred_resp = PredictionResponse(
             score=temp.score,
             interpretation=temp.interpretation,
@@ -94,22 +125,6 @@ class GetLatestNewsCommandHandler:
             url=news.url,
             prediction=pred_resp,
         )
-
-        # 6) Event‐sourcing: feed the pure integer into the aggregate
-        past = self.__event_store.get_events(latest_news.id)
-        logger.debug("Found %d past events", len(past))
-        agg = PredictionAggregate.detect(latest_news, past, raw_score.value)
-
-        # 7) persist & publish
-        for evt in agg.get_uncommitted_events():
-            logger.debug("Appending event %s v=%d", evt.type, evt.version)
-            self.__event_store.append(evt)
-            logger.debug("Publishing event %s", evt.type)
-            self.__publisher.publish(evt)
-        agg.mark_events_as_committed()
-
-        # 8) update read model
-        logger.debug("Saving LatestNews to read-model for %s", command.ticker)
         self.__read_model.save(latest_news)
 
         logger.info("Completed GetLatestNews for %s", command.ticker)
