@@ -5,7 +5,11 @@ from stock_api.domain.events import DomainEvent
 
 class EventStoreRepository(ABC):
     @abstractmethod
-    def append(self, event: DomainEvent) -> None:
+    def append(
+        self,
+        aggregate_id: str,
+        events: List[DomainEvent],
+        expected_version: int,) -> None:
         pass
 
     @abstractmethod
