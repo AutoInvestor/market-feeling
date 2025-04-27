@@ -147,4 +147,4 @@ app.include_router(latest_news_controller.router)
 app.include_router(news_by_date_controller.router)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
