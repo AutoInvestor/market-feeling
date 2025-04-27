@@ -13,7 +13,8 @@ class PredictionAggregate(EventSourcedEntity):
         self.state = PredictionState()
 
     @staticmethod
-    def detect(news: News, past_events: List[DomainEvent], raw_score: int
+    def detect(
+        news: News, past_events: List[DomainEvent], raw_score: int
     ) -> "PredictionAggregate":
         agg = PredictionAggregate(stream=past_events)
         version = len(past_events) + 1

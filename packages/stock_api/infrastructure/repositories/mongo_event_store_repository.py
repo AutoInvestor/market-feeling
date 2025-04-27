@@ -6,6 +6,7 @@ from stock_api.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class MongoEventStoreRepository(EventStoreRepository):
     def __init__(self, uri: str | None, db_name: str):
         """
@@ -34,8 +35,7 @@ class MongoEventStoreRepository(EventStoreRepository):
 
         # 1) find the highest existing version
         latest = (
-            self._coll
-            .find({"aggregate_id": aggregate_id}, {"version": 1})
+            self._coll.find({"aggregate_id": aggregate_id}, {"version": 1})
             .sort("version", -1)
             .limit(1)
             .next(None)
@@ -52,25 +52,23 @@ class MongoEventStoreRepository(EventStoreRepository):
         # 3) insert all new events in one batch
         docs = []
         for evt in events:
-            docs.append({
-                "_id": evt.event_id,
-                "occurred_at": evt.occurred_at,
-                "aggregate_id": evt.aggregate_id,
-                "version": evt.version,
-                "type": evt.type,
-                "payload": evt.payload,
-            })
+            docs.append(
+                {
+                    "_id": evt.event_id,
+                    "occurred_at": evt.occurred_at,
+                    "aggregate_id": evt.aggregate_id,
+                    "version": evt.version,
+                    "type": evt.type,
+                    "payload": evt.payload,
+                }
+            )
         self._coll.insert_many(docs)
 
     def get_events(self, aggregate_id: str) -> list[DomainEvent]:
         if not self._enabled:
             return []
 
-        cursor = (
-            self._coll
-            .find({"aggregate_id": aggregate_id})
-            .sort("version", 1)
-        )
+        cursor = self._coll.find({"aggregate_id": aggregate_id}).sort("version", 1)
         return [
             DomainEvent(
                 event_id=doc["_id"],

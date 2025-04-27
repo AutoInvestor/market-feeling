@@ -9,7 +9,8 @@ class EventStoreRepository(ABC):
         self,
         aggregate_id: str,
         events: List[DomainEvent],
-        expected_version: int,) -> None:
+        expected_version: int,
+    ) -> None:
         pass
 
     @abstractmethod
