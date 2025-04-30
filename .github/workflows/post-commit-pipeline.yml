@@ -147,24 +147,3 @@ jobs:
       image: autoinvestor-market-feeling
       version: ${{ needs.build_test_release.outputs.new-version }}
     secrets: inherit
-
-  update-cd-repo-main:
-    name: GitOps - main image tag
-    uses: AutoInvestor/infra-gitops/.github/workflows/update-version.yml@main
-    needs: build_test_release
-    if: needs.build_test_release.outputs.bump != 'none'
-    with:
-      image: autoinvestor-market-feeling
-      version: ${{ needs.build_test_release.outputs.new-version }}
-    secrets: inherit
-
-  update-cd-repo-scheduler:
-    name: GitOps - scheduler image tag
-    uses: AutoInvestor/infra-gitops/.github/workflows/update-version.yml@main
-    needs: build_test_release
-    if: needs.build_test_release.outputs.bump != 'none'
-    with:
-      image: autoinvestor-news-pinger
-      version: ${{ needs.build_test_release.outputs.new-version }}
-    secrets: inherit
-
