@@ -64,11 +64,6 @@ class GetLatestNewsCommandHandler:
         raw_score: RawScore = self.__model.get_prediction_from_url(
             news.url, company.name
         )
-        logger.info(
-            "Predicted raw score=%d for news id=%s",
-            raw_score.value,
-            news.id,
-        )
 
         # Get the last prediction for this ticker, if exists
         prediction = self.__event_store.find_by_id(command.ticker)

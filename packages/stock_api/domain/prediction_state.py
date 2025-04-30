@@ -53,6 +53,14 @@ class PredictionState:
         return self.ticker == ""
 
     @staticmethod
+    def get_interpretation_from_score(score: int) -> str:
+        return PredictionState.INTERPRETATIONS[score]
+
+    @staticmethod
+    def get_range_from_score(score: int) -> str:
+        return PredictionState.RANGE[score]
+
+    @staticmethod
     def with_prediction_created(event: DomainEvent) -> "PredictionState":
         return PredictionState(ticker=event.aggregate_id)
 
