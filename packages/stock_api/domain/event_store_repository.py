@@ -1,18 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import List
-from stock_api.domain.events import DomainEvent
+from typing import Optional
+from stock_api.domain.prediction_aggregate import PredictionAggregate
 
 
 class EventStoreRepository(ABC):
     @abstractmethod
-    def append(
-        self,
-        aggregate_id: str,
-        events: List[DomainEvent],
-        expected_version: int,
-    ) -> None:
+    def save(self, prediction: PredictionAggregate):
         pass
 
     @abstractmethod
-    def get_events(self, aggregate_id: str) -> List[DomainEvent]:
+    def find_by_id(self, ticker: str) -> Optional[PredictionAggregate]:
         pass

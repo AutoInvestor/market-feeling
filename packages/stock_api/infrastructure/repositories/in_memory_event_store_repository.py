@@ -1,33 +1,25 @@
-from typing import List
+from typing import List, Optional
 from stock_api.domain.event_store_repository import EventStoreRepository
 from stock_api.domain.events import DomainEvent
 from stock_api.domain.exceptions import ConcurrencyError
+from stock_api.domain.prediction_aggregate import PredictionAggregate
 
 
 class InMemoryEventStoreRepository(EventStoreRepository):
     def __init__(self):
-        self._events: dict[str, List[DomainEvent]] = {}
+        self.__event_store: List[DomainEvent] = []
 
-    def append(
-        self,
-        aggregate_id: str,
-        events: List[DomainEvent],
-        expected_version: int,
-    ) -> None:
-        """
-        Only append if the current version (number of stored events)
-        matches expected_version; otherwise raise ConcurrencyError.
-        """
-        current = self._events.get(aggregate_id, [])
-        current_version = len(current)
+    def save(self, prediction: PredictionAggregate):
+        events = prediction.get_uncommitted_events()
+        for event in events:
+            self.__event_store.append(event)
 
-        if current_version != expected_version:
-            raise ConcurrencyError(
-                f"[InMemory] Stream {aggregate_id} at version {current_version}, "
-                f"but expected {expected_version}"
-            )
+    def find_by_id(self, ticker: str) -> Optional[PredictionAggregate]:
+        events_for_aggregate: List[DomainEvent] = [
+            event for event in self.__event_store if event.aggregate_id == ticker
+        ]
 
-        self._events.setdefault(aggregate_id, []).extend(events)
+        if not events_for_aggregate:
+            return None
 
-    def get_events(self, aggregate_id: str) -> List[DomainEvent]:
-        return list(self._events.get(aggregate_id, []))
+        return PredictionAggregate.from_events(events_for_aggregate)

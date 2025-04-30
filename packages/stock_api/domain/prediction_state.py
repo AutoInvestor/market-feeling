@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from stock_api.domain.events import DomainEvent
+
 
 @dataclass
 class PredictionState:
-    id: str = ""
     ticker: str = ""
     date: datetime = None
     title: str = ""
@@ -13,7 +14,7 @@ class PredictionState:
     interpretation: str = ""
     percentage_range: str = ""
 
-    _interpretations = {
+    INTERPRETATIONS = {
         0: "Very sharp drop",
         1: "Significant drop",
         2: "Moderate drop",
@@ -27,7 +28,7 @@ class PredictionState:
         10: "Very sharp rise",
     }
 
-    _percentage_ranges = {
+    RANGE = {
         0: "≤ -2.5%",
         1: "-2% a -2.5%",
         2: "-1.5% a -2%",
@@ -41,14 +42,41 @@ class PredictionState:
         10: "≥ +2.5%",
     }
 
-    def apply_score(self, raw_score: float):
-        """Round, clamp, and set interpretation/range in one go."""
-        try:
-            score = int(round(raw_score))
-        except TypeError:
-            raise ValueError(f"Score must be numeric (got {raw_score!r})")
+    @staticmethod
+    def empty() -> "PredictionState":
+        return PredictionState()
+
+    def get_aggregate_id(self) -> str:
+        return self.ticker
+
+    def is_empty(self) -> bool:
+        return self.ticker == ""
+
+    @staticmethod
+    def get_interpretation_from_score(score: int) -> str:
+        return PredictionState.INTERPRETATIONS[score]
+
+    @staticmethod
+    def get_range_from_score(score: int) -> str:
+        return PredictionState.RANGE[score]
+
+    @staticmethod
+    def with_prediction_created(event: DomainEvent) -> "PredictionState":
+        return PredictionState(ticker=event.aggregate_id)
+
+    @staticmethod
+    def with_feeling_detected(event: DomainEvent) -> "PredictionState":
+        payload = event.payload
+
+        score = int(round(payload["score"]))
         score = max(0, min(10, score))
 
-        self.score = score
-        self.interpretation = self._interpretations[score]
-        self.percentage_range = self._percentage_ranges[score]
+        return PredictionState(
+            ticker=event.aggregate_id,
+            date=payload["date"],
+            title=payload["title"],
+            url=payload["url"],
+            score=score,
+            interpretation=PredictionState.INTERPRETATIONS[score],
+            percentage_range=PredictionState.RANGE[score],
+        )

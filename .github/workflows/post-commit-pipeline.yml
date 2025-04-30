@@ -100,7 +100,7 @@ jobs:
           sudo docker image prune --all --force || true
           df -h
 
-      - name: Build & push docker image
+      - name: Build & push docker image for market-feeling
         if: steps.version_increment.outputs.bump != 'none'
         env:
           DOCKER_IMAGE_VERSION: "${{ steps.calculate_version.outputs.NEW_VERSION }}"
@@ -112,6 +112,20 @@ jobs:
             -t $DOCKER_USERNAME/autoinvestor-market-feeling:${DOCKER_IMAGE_VERSION} \
             .
           docker push $DOCKER_USERNAME/autoinvestor-market-feeling:${DOCKER_IMAGE_VERSION}
+
+      - name: Build & push docker image for news scheduler
+        if: steps.version_increment.outputs.bump != 'none'
+        env:
+          DOCKER_IMAGE_VERSION: "${{ steps.calculate_version.outputs.NEW_VERSION }}"
+          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+         echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+         docker build \
+           -f scheduler/Dockerfile \
+           -t $DOCKER_USERNAME/autoinvestor-news-pinger:${DOCKER_IMAGE_VERSION} \
+           scheduler
+         docker push $DOCKER_USERNAME/autoinvestor-news-pinger:${DOCKER_IMAGE_VERSION}
 
       - name: Create GitHub Release
         if: steps.version_increment.outputs.bump != 'none'
