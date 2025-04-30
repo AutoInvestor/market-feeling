@@ -30,48 +30,37 @@ class GetLatestNewsCommandHandler:
         model: PredictionModel,
         event_store: EventStoreRepository,
         read_model: NewsReadModelRepository,
-        publisher: DomainEventPublisher,
+        event_publisher: DomainEventPublisher,
     ):
         self.__news_repository = news_repository
         self.__company_repository = company_repository
         self.__model = model
         self.__event_store = event_store
         self.__read_model = read_model
-        self.__publisher = publisher
+        self.__event_publisher = event_publisher
 
     def handle(self, command: GetLatestNewsCommand) -> LatestNews:
         logger.info("GetLatestNews for ticker='%s'", command.ticker)
 
-        # 1) Validate company exists
+        # Validate company exists
         company = self.__company_repository.get_by_ticker(command.ticker)
         if company is None:
             logger.warning("Company not found: %s", command.ticker)
-            return LatestNews(
-                id="",
-                ticker=command.ticker,
-                date=datetime.min,
-                title="",
-                url="",
-                prediction=PredictionResponse(
-                    score=0,
-                    interpretation="",
-                    percentage_range="",
-                ),
-            )
+            raise NotFoundException(f"Company '{command.ticker}' not found")
 
-        # 2) Try read model
+        # Fetch raw news
+        news = self.__news_repository.get_latest_news(command.ticker)
+        if news is None:
+            logger.warning("No news found for %s", command.ticker)
+            return LatestNews.empty()
+
+        # Try read model - best effort
         existing = self.__read_model.get(command.ticker)
         if existing:
             logger.debug("Read-model cache hit for %s", command.ticker)
             return existing
 
-        # 3) Fetch raw news
-        news = self.__news_repository.get_latest_news(command.ticker)
-        if news is None:
-            logger.warning("No news found for %s", command.ticker)
-            raise NotFoundException(f"No news found for '{command.ticker}'")
-
-        # 4) Get only a RawScore VO
+        # Get a score for the latest news
         raw_score: RawScore = self.__model.get_prediction_from_url(
             news.url, company.name
         )
@@ -81,41 +70,32 @@ class GetLatestNewsCommandHandler:
             news.id,
         )
 
-        # 5) Build in‐memory state
-        temp = PredictionState()
-        temp.apply_score(raw_score.value)
+        # Get the last prediction for this ticker, if exists
+        prediction = self.__event_store.find_by_id(command.ticker)
 
-        # 6) Event‐sourcing: rehydrate & detect
-        past = self.__event_store.get_events(news.id)
+        # Update the state of the aggregate
+        if not prediction:
+            prediction = PredictionAggregate.create(command.ticker)
 
-        agg = PredictionAggregate.detect(news, past, raw_score.value)
-        expected_version = len(past)
+        prediction.register_latest_news(news, raw_score.value)
 
-        # 7) persist & publish with optimistic concurrency
-        uncommitted = agg.get_uncommitted_events()
-        try:
-            for evt in uncommitted:
-                self.__event_store.append(
-                    aggregate_id=news.id,
-                    events=[evt],
-                    expected_version=expected_version,
-                )
-                self.__publisher.publish(evt)
-                expected_version += 1
-        except ConcurrencyError:
-            logger.info(
-                "Concurrency conflict on news.id=%s: another pod already wrote; skipping",
-                news.id,
-            )
-            return self.__read_model.get(command.ticker)
+        # Save the events into the write-side event store
+        events = prediction.get_uncommitted_events()
 
-        agg.mark_events_as_committed()
+        # Persist events into the event store
+        self.__event_store.save(prediction)
 
-        # 8) update read model
+        # Publish events to notify subscribers
+        self.__event_publisher.publish(events)
+
+        # After publishing, clear the uncommitted events from the aggregate
+        prediction.mark_events_as_committed()
+
+        # Transform the prediction to a VO
         pred_resp = PredictionResponse(
-            score=temp.score,
-            interpretation=temp.interpretation,
-            percentage_range=temp.percentage_range,
+            score=raw_score.value,
+            interpretation="",
+            percentage_range="",
         )
         latest_news = LatestNews(
             id=news.id,
@@ -125,6 +105,8 @@ class GetLatestNewsCommandHandler:
             url=news.url,
             prediction=pred_resp,
         )
+
+        # Update read-model
         self.__read_model.save(latest_news)
 
         logger.info("Completed GetLatestNews for %s", command.ticker)

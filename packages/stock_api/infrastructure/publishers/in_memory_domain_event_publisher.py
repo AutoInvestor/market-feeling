@@ -1,3 +1,5 @@
+from typing import List
+
 from stock_api.domain.event_publisher import DomainEventPublisher
 from stock_api.domain.events import DomainEvent
 from stock_api.logger import get_logger
@@ -10,12 +12,10 @@ class InMemoryDomainEventPublisher(DomainEventPublisher):
         self.published_events: list[DomainEvent] = []
         logger.info("Initialized InMemoryDomainEventPublisher")
 
-    def publish(self, event: DomainEvent) -> None:
-        self.published_events.append(event)
+    def publish(self, events: List[DomainEvent]):
+        for evt in events:
+            self.published_events.append(evt)
 
-        logger.info(
-            "Published event %s for aggregate %s (version=%d)",
-            event.type,
-            event.aggregate_id,
-            event.version,
-        )
+            logger.info(
+                "Published event %s for aggregate %s", evt.type, evt.aggregate_id
+            )
