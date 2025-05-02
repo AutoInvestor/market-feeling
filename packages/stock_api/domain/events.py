@@ -25,9 +25,21 @@ def make_first_prediction_for_ticker_event(ticker: str) -> DomainEvent:
 
 
 def make_asset_feeling_detected_event(
-    ticker: str, url: str, title: str, date: datetime, score: int, version: int
+    ticker: str,
+    url: str,
+    news_id: str,
+    title: str,
+    date: datetime,
+    score: int,
+    version: int,
 ) -> DomainEvent:
-    payload = {"url": url, "title": title, "date": date.isoformat(), "score": score}
+    payload = {
+        "url": url,
+        "news_id": news_id,
+        "title": title,
+        "date": date.isoformat(),
+        "score": score,
+    }
 
     return DomainEvent(
         event_id=str(uuid.uuid4()),

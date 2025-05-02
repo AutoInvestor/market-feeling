@@ -56,7 +56,7 @@ class GetLatestNewsCommandHandler:
 
         # Try read model - best effort
         existing = self.__read_model.get(command.ticker)
-        if existing:
+        if existing and existing.is_equal_to(news.id):
             logger.debug("Read-model cache hit for %s", command.ticker)
             return existing
 
@@ -87,10 +87,11 @@ class GetLatestNewsCommandHandler:
         prediction.mark_events_as_committed()
 
         # Transform the prediction to a VO
+        state = prediction.get_state()
         pred_resp = PredictionResponse(
-            score=raw_score.value,
-            interpretation="",
-            percentage_range="",
+            score=state.score,
+            interpretation=state.interpretation,
+            percentage_range=state.percentage_range,
         )
         latest_news = LatestNews(
             id=news.id,

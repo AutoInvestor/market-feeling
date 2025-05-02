@@ -7,6 +7,18 @@ from stock_api.domain.news_fetcher import NewsFetcher
 
 
 class YFinanceNewsFetcher(NewsFetcher):
+    def make_deterministic_id(
+        self, ticker: str, pub_datetime, title: str, url: str
+    ) -> str:
+        ticker_norm = ticker.upper().strip()
+        date_norm = pub_datetime.isoformat()
+        title_norm = title.strip()
+        url_norm = url.strip()
+
+        raw = "||".join([ticker_norm, date_norm, title_norm, url_norm])
+
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, raw))
+
     def get_latest_news(self, ticker: str) -> Optional[News]:
         ticker_upper = ticker.upper()
         stock = yf.Ticker(ticker_upper)
@@ -29,7 +41,9 @@ class YFinanceNewsFetcher(NewsFetcher):
 
             news_objects.append(
                 News(
-                    id=item.get("id", str(uuid.uuid4())),
+                    id=self.make_deterministic_id(
+                        ticker_upper, pub_datetime, title, url
+                    ),
                     ticker=ticker_upper,
                     date=pub_datetime,
                     title=title,
