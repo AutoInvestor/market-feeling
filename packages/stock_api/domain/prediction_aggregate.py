@@ -70,3 +70,8 @@ class PredictionAggregate(EventSourcedEntity):
 
     def get_state(self) -> PredictionState:
         return self.__state
+
+    def filter_events_without_creation(
+        self, events: List[DomainEvent]
+    ) -> List[DomainEvent]:
+        return [event for event in events if event.type != "FIRST_TICKER_PREDICTION"]

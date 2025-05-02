@@ -81,7 +81,8 @@ class GetLatestNewsCommandHandler:
         self.__event_store.save(prediction)
 
         # Publish events to notify subscribers
-        self.__event_publisher.publish(events)
+        events_to_publish = prediction.filter_events_without_creation(events)
+        self.__event_publisher.publish(events_to_publish)
 
         # After publishing, clear the uncommitted events from the aggregate
         prediction.mark_events_as_committed()
