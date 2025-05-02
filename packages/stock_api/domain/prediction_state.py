@@ -8,6 +8,7 @@ from stock_api.domain.events import DomainEvent
 class PredictionState:
     ticker: str = ""
     date: datetime = None
+    news_id: str = ""
     title: str = ""
     url: str = ""
     score: int = 5
@@ -74,6 +75,7 @@ class PredictionState:
         return PredictionState(
             ticker=event.aggregate_id,
             date=payload["date"],
+            news_id=payload["news_id"],
             title=payload["title"],
             url=payload["url"],
             score=score,

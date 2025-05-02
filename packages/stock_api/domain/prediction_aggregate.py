@@ -36,6 +36,7 @@ class PredictionAggregate(EventSourcedEntity):
         self.apply(
             make_asset_feeling_detected_event(
                 ticker=self.__state.get_aggregate_id(),
+                news_id=news.id,
                 url=news.url,
                 title=news.title,
                 date=news.date,
@@ -66,3 +67,11 @@ class PredictionAggregate(EventSourcedEntity):
             raise ValueError("Incorrect transition from a previous state")
 
         self.__state = self.__state.with_feeling_detected(event)
+
+    def get_state(self) -> PredictionState:
+        return self.__state
+
+    def filter_events_without_creation(
+        self, events: List[DomainEvent]
+    ) -> List[DomainEvent]:
+        return [event for event in events if event.type != "FIRST_TICKER_PREDICTION"]
