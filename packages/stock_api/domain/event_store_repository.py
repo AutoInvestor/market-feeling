@@ -9,5 +9,5 @@ class EventStoreRepository(ABC):
         pass
 
     @abstractmethod
-    def find_by_id(self, ticker: str) -> Optional[PredictionAggregate]:
+    def find_by_id(self, ticker: str) -> PredictionAggregate:
         pass

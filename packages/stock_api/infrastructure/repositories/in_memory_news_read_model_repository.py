@@ -8,8 +8,8 @@ class InMemoryNewsReadModelRepository(NewsReadModelRepository):
     def __init__(self):
         self._storage: dict[str, LatestNews] = {}
 
-    def get(self, ticker: str):
-        return self._storage.get(ticker.upper())
+    def get(self, news_id: str):
+        return self._storage.get(news_id)
 
     def save(self, latest_news: LatestNews) -> None:
-        self._storage[latest_news.ticker.upper()] = latest_news
+        self._storage[latest_news.id] = latest_news

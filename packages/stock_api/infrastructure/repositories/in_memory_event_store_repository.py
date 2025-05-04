@@ -14,12 +14,12 @@ class InMemoryEventStoreRepository(EventStoreRepository):
         for event in events:
             self.__event_store.append(event)
 
-    def find_by_id(self, ticker: str) -> Optional[PredictionAggregate]:
+    def find_by_id(self, ticker: str) -> PredictionAggregate:
         events_for_aggregate: List[DomainEvent] = [
             event for event in self.__event_store if event.aggregate_id == ticker
         ]
 
         if not events_for_aggregate:
-            return None
+            return PredictionAggregate.empty()
 
         return PredictionAggregate.from_events(events_for_aggregate)

@@ -13,17 +13,6 @@ class DomainEvent:
     payload: dict
 
 
-def make_first_prediction_for_ticker_event(ticker: str) -> DomainEvent:
-    return DomainEvent(
-        event_id=str(uuid.uuid4()),
-        occurred_at=int(time.time()),
-        aggregate_id=ticker,
-        version=0,
-        type="FIRST_TICKER_PREDICTION",
-        payload={},
-    )
-
-
 def make_asset_feeling_detected_event(
     ticker: str,
     url: str,

@@ -5,7 +5,7 @@ from stock_api.application.news.dtos import LatestNews
 
 class NewsReadModelRepository(ABC):
     @abstractmethod
-    def get(self, ticker: str) -> Optional[LatestNews]:
+    def get(self, news_id: str) -> Optional[LatestNews]:
         pass
 
     @abstractmethod

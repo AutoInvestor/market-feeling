@@ -13,7 +13,7 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
     def __init__(self, uri: str | None, db_name: str):
         """
         If uri is empty or None, this repository becomes a no-op stub:
-          - get() always returns None
+          - get() always returns empty
           - save() does nothing
         """
         self._enabled = bool(uri)
@@ -26,16 +26,16 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
         client = MongoClient(uri)
         self._coll = client[db_name]["news"]
 
-    def get(self, ticker: str) -> LatestNews | None:
+    def get(self, news_id: str) -> LatestNews | None:
         if not self._enabled:
             # dummy: no data available
             return None
 
-        doc = self._coll.find_one({"ticker": ticker.upper()})
+        doc = self._coll.find_one({"_id": news_id})
         if not doc:
             return None
         return LatestNews(
-            id=doc["id"],
+            id=doc["_id"],
             ticker=doc["ticker"],
             date=datetime.fromisoformat(doc["date"]),
             title=doc["title"],
@@ -49,8 +49,8 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
             return
 
         doc = {
+            "_id": news.id,
             "ticker": news.ticker,
-            "id": news.id,
             "date": news.date.isoformat(),
             "title": news.title,
             "url": news.url,
@@ -61,7 +61,7 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
             },
         }
         self._coll.update_one(
-            {"ticker": news.ticker},
+            {"_id": news.id},
             {"$set": doc},
             upsert=True,
         )
