@@ -45,6 +45,3 @@ class LatestNews:
                 percentage_range="",
             ),
         )
-
-    def is_equal_to(self, other_id: str) -> bool:
-        return self.id == other_id

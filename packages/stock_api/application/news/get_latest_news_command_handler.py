@@ -1,4 +1,3 @@
-from datetime import datetime
 from stock_api.application.exceptions import NotFoundException
 from stock_api.application.news.dtos import (
     GetLatestNewsCommand,
@@ -9,13 +8,10 @@ from stock_api.domain.company_info_fetcher import CompanyInfoFetcher
 from stock_api.domain.news_fetcher import NewsFetcher
 from stock_api.domain.prediction_model import PredictionModel
 from stock_api.domain.event_store_repository import EventStoreRepository
-from stock_api.domain.exceptions import ConcurrencyError
 from stock_api.application.news.news_read_model_repository import (
     NewsReadModelRepository,
 )
 from stock_api.domain.event_publisher import DomainEventPublisher
-from stock_api.domain.prediction_aggregate import PredictionAggregate
-from stock_api.domain.prediction_state import PredictionState
 from stock_api.domain.raw_score import RawScore
 from stock_api.logger import get_logger
 
@@ -55,8 +51,8 @@ class GetLatestNewsCommandHandler:
             return LatestNews.empty()
 
         # Try read model - best effort
-        existing = self.__read_model.get(command.ticker)
-        if existing and existing.is_equal_to(news.id):
+        existing = self.__read_model.get(news.id)
+        if existing:
             logger.debug("Read-model cache hit for %s", command.ticker)
             return existing
 
@@ -68,10 +64,7 @@ class GetLatestNewsCommandHandler:
         # Get the last prediction for this ticker, if exists
         prediction = self.__event_store.find_by_id(command.ticker)
 
-        # Update the state of the aggregate
-        if not prediction:
-            prediction = PredictionAggregate.create(command.ticker)
-
+        # Register the latest news in the prediction aggregate
         prediction.register_latest_news(news, raw_score.value)
 
         # Save the events into the write-side event store
@@ -81,8 +74,7 @@ class GetLatestNewsCommandHandler:
         self.__event_store.save(prediction)
 
         # Publish events to notify subscribers
-        events_to_publish = prediction.filter_events_without_creation(events)
-        self.__event_publisher.publish(events_to_publish)
+        self.__event_publisher.publish(events)
 
         # After publishing, clear the uncommitted events from the aggregate
         prediction.mark_events_as_committed()

@@ -42,9 +42,9 @@ class MongoEventStoreRepository(EventStoreRepository):
             )
         self._coll.insert_many(docs)
 
-    def find_by_id(self, ticker: str) -> Optional[PredictionAggregate]:
+    def find_by_id(self, ticker: str) -> PredictionAggregate:
         if not self._enabled:
-            return None
+            return PredictionAggregate.empty()
 
         cursor = self._coll.find({"aggregate_id": ticker}).sort("version", 1)
 
@@ -61,6 +61,6 @@ class MongoEventStoreRepository(EventStoreRepository):
             events_for_aggregate.append(event)
 
         if not events_for_aggregate:
-            return None
+            PredictionAggregate.empty()
 
         return PredictionAggregate.from_events(events_for_aggregate)
