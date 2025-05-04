@@ -11,7 +11,7 @@ class PredictionState:
     news_id: str = ""
     title: str = ""
     url: str = ""
-    score: int = 5
+    score: int = -1
     interpretation: str = ""
     percentage_range: str = ""
 
@@ -46,12 +46,6 @@ class PredictionState:
     @staticmethod
     def empty() -> "PredictionState":
         return PredictionState()
-
-    def get_aggregate_id(self) -> str:
-        return self.ticker
-
-    def is_empty(self) -> bool:
-        return self.ticker == ""
 
     @staticmethod
     def get_interpretation_from_score(score: int) -> str:

@@ -1,4 +1,4 @@
-import uuid, time
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -6,7 +6,7 @@ from datetime import datetime
 @dataclass
 class DomainEvent:
     event_id: str
-    occurred_at: int
+    occurred_at: str
     aggregate_id: str
     version: int
     type: str
@@ -32,7 +32,7 @@ def make_asset_feeling_detected_event(
 
     return DomainEvent(
         event_id=str(uuid.uuid4()),
-        occurred_at=int(time.time()),
+        occurred_at=datetime.now().isoformat(),
         aggregate_id=ticker,
         version=version,
         type="ASSET_FEELING_DETECTED",
