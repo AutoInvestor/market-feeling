@@ -12,3 +12,6 @@ python -m stock_model.main --steps prepare_dataset
 
 # Train model
 python -m stock_model.main --steps train_model
+
+# Get csv to import data (events and news) to database
+python -m stock_model.main --steps fetch_events

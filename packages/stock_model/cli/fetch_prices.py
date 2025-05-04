@@ -5,7 +5,7 @@ from stock_model.logger import get_logger
 logger = get_logger(__name__)
 
 
-def main(start="2020-01-01", end="2025-01-01"):
+def main(start="2024-01-01", end="2025-05-03"):
     # Load tickers
     df_comp = pd.read_csv("data/companies.csv")
     tickers = df_comp["ticker"].dropna().astype(str).tolist()

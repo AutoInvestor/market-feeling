@@ -132,7 +132,7 @@ class GdeltFetcher:
                     results.append(
                         {
                             "ticker": company.get("ticker"),
-                            "date": dt.strftime("%Y-%m-%d"),
+                            "date": dt.strftime("%Y-%m-%dT%H:%M:%S"),
                             "title": art.get("title", ""),
                             "url": url,
                         }
