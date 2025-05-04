@@ -1,9 +1,7 @@
+from dataclasses import dataclass
+
 from stock_api.application.exceptions import NotFoundException
-from stock_api.application.news.dtos import (
-    GetLatestNewsCommand,
-    LatestNews,
-    PredictionResponse,
-)
+from stock_api.application.news.latest_news_dto import LatestNews
 from stock_api.domain.company_info_fetcher import CompanyInfoFetcher
 from stock_api.domain.news_fetcher import NewsFetcher
 from stock_api.domain.prediction_model import PredictionModel
@@ -12,10 +10,15 @@ from stock_api.application.news.news_read_model_repository import (
     NewsReadModelRepository,
 )
 from stock_api.domain.event_publisher import DomainEventPublisher
-from stock_api.domain.raw_score import RawScore
+from stock_api.domain.raw_feeling import RawFeeling
 from stock_api.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+@dataclass
+class GetLatestNewsCommand:
+    ticker: str
 
 
 class GetLatestNewsCommandHandler:
@@ -56,8 +59,8 @@ class GetLatestNewsCommandHandler:
             logger.debug("Read-model cache hit for %s", command.ticker)
             return existing
 
-        # Get a score for the latest news
-        raw_score: RawScore = self.__model.get_prediction_from_url(
+        # Get a feeling for the latest news
+        raw_feeling: RawFeeling = self.__model.get_prediction_from_url(
             news.url, company.name
         )
 
@@ -65,7 +68,7 @@ class GetLatestNewsCommandHandler:
         prediction = self.__event_store.find_by_id(command.ticker)
 
         # Register the latest news in the prediction aggregate
-        prediction.register_latest_news(news, raw_score.value)
+        prediction.register_latest_news(news, raw_feeling.value)
 
         # Save the events into the write-side event store
         events = prediction.get_uncommitted_events()
@@ -81,18 +84,13 @@ class GetLatestNewsCommandHandler:
 
         # Transform the prediction to a VO
         state = prediction.get_state()
-        pred_resp = PredictionResponse(
-            score=state.score,
-            interpretation=state.interpretation,
-            percentage_range=state.percentage_range,
-        )
         latest_news = LatestNews(
             id=news.id,
             ticker=news.ticker,
             date=news.date,
             title=news.title,
             url=news.url,
-            prediction=pred_resp,
+            feeling=state.feeling,
         )
 
         # Update read-model

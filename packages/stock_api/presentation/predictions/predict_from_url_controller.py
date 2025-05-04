@@ -13,16 +13,8 @@ class PredictionUrlRequestDTO:
 
 
 @dataclass
-class PredictionDTO:
-    score: int
-    interpretation: str
-    percentage_range: str
-
-
-@dataclass
 class PredictionResponseDTO:
-    ticker: str
-    prediction: PredictionDTO
+    feeling: int
 
 
 class PredictFromURLController:
@@ -42,12 +34,5 @@ class PredictFromURLController:
 
     async def handle(self, request: PredictionUrlRequestDTO) -> PredictionResponseDTO:
         command = PredictFromURLCommand(request.ticker, request.url)
-        prediction = self.__command_handler.handle(command)
-        prediction_dto = PredictionDTO(
-            score=prediction.score,
-            interpretation=prediction.interpretation,
-            percentage_range=prediction.percentage_range,
-        )
-        return PredictionResponseDTO(
-            ticker=request.ticker.upper(), prediction=prediction_dto
-        )
+        feeling = self.__command_handler.handle(command)
+        return PredictionResponseDTO(feeling=feeling)

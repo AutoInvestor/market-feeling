@@ -22,7 +22,7 @@ class PredictionAggregate(EventSourcedEntity):
     def from_events(stream: List[DomainEvent]) -> "PredictionAggregate":
         return PredictionAggregate(stream)
 
-    def register_latest_news(self, news: News, score: int):
+    def register_latest_news(self, news: News, feeling: int):
         self.apply(
             make_asset_feeling_detected_event(
                 ticker=news.ticker,
@@ -30,7 +30,7 @@ class PredictionAggregate(EventSourcedEntity):
                 url=news.url,
                 title=news.title,
                 date=news.date,
-                score=score,
+                feeling=feeling,
                 version=self._version,
             )
         )

@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from datetime import date
 from typing import Optional, List
-from stock_api.application.news.dtos import LatestNews
+
+from stock_api.application.news.latest_news_dto import LatestNews
 
 
 class NewsReadModelRepository(ABC):

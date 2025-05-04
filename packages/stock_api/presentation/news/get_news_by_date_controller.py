@@ -11,19 +11,12 @@ from stock_api.application.news.get_news_by_date_query_handler import (
 
 
 @dataclass
-class PredictionDTO:
-    score: int
-    interpretation: str
-    percentage_range: str
-
-
-@dataclass
 class NewsItemDTO:
     id: str
     date: date
     title: str
     url: str
-    prediction: PredictionDTO
+    feeling: int
 
 
 @dataclass
@@ -65,11 +58,7 @@ class GetNewsByDateController:
                     date=item.date,
                     title=item.title,
                     url=item.url,
-                    prediction=PredictionDTO(
-                        score=item.prediction.score,
-                        interpretation=item.prediction.interpretation,
-                        percentage_range=item.prediction.percentage_range,
-                    ),
+                    feeling=item.feeling,
                 )
             )
         return news_dtos
