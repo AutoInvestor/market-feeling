@@ -25,7 +25,7 @@ class PredictionAggregate(EventSourcedEntity):
     def register_latest_news(self, news: News, score: int):
         self.apply(
             make_asset_feeling_detected_event(
-                ticker=self.__state.get_aggregate_id(),
+                ticker=news.ticker,
                 news_id=news.id,
                 url=news.url,
                 title=news.title,

@@ -62,10 +62,6 @@ class PredictionState:
         return PredictionState.RANGE[score]
 
     @staticmethod
-    def with_prediction_created(event: DomainEvent) -> "PredictionState":
-        return PredictionState(ticker=event.aggregate_id)
-
-    @staticmethod
     def with_feeling_detected(event: DomainEvent) -> "PredictionState":
         payload = event.payload
 
