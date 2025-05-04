@@ -3,9 +3,10 @@ from fastapi import APIRouter, Depends
 from datetime import date
 from typing import List
 
-from stock_api.application.news.get_news_by_date_command_handler import (
-    GetNewsByDateCommandHandler,
-    GetNewsByDateCommand,
+from stock_api.application.exceptions import BadRequestException
+from stock_api.application.news.get_news_by_date_query_handler import (
+    GetNewsByDateQueryHandler,
+    GetNewsByDateQuery,
 )
 
 
@@ -26,26 +27,20 @@ class NewsItemDTO:
 
 
 @dataclass
-class NewsByDateResponseDTO:
-    ticker: str
-    date: date
-    news: List[NewsItemDTO]
-
-
-@dataclass
 class GetNewsByDateQueryDTO:
-    date: date
+    start_date: date
+    end_date: date
 
 
 class GetNewsByDateController:
-    def __init__(self, command_handler: GetNewsByDateCommandHandler):
-        self.__command_handler = command_handler
+    def __init__(self, query_handler: GetNewsByDateQueryHandler):
+        self.__query_handler = query_handler
         self.__router = APIRouter()
         self.__router.add_api_route(
             "/companies/{ticker}/news",
             self.handle,
             methods=["GET"],
-            response_model=NewsByDateResponseDTO,
+            response_model=List[NewsItemDTO],
         )
 
     @property
@@ -54,11 +49,16 @@ class GetNewsByDateController:
 
     async def handle(
         self, ticker: str, query: GetNewsByDateQueryDTO = Depends()
-    ) -> NewsByDateResponseDTO:
-        command = GetNewsByDateCommand(ticker, query.date)
-        news_items = self.__command_handler.handle(command)
+    ) -> List[NewsItemDTO]:
+        if query.start_date > query.end_date:
+            raise BadRequestException("start_date must be on or before end_date")
+
+        query = GetNewsByDateQuery(ticker, query.start_date, query.end_date)
+
+        news_items = self.__query_handler.handle(query)
+
         news_dtos = []
-        for item in news_items.list:
+        for item in news_items:
             news_dtos.append(
                 NewsItemDTO(
                     id=item.id,
@@ -72,4 +72,4 @@ class GetNewsByDateController:
                     ),
                 )
             )
-        return NewsByDateResponseDTO(ticker=ticker, date=query.date, news=news_dtos)
+        return news_dtos

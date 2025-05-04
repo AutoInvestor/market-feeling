@@ -1,4 +1,3 @@
-from datetime import datetime
 from stock_api.application.exceptions import NotFoundException
 from stock_api.application.news.dtos import (
     GetLatestNewsCommand,
@@ -9,13 +8,10 @@ from stock_api.domain.company_info_fetcher import CompanyInfoFetcher
 from stock_api.domain.news_fetcher import NewsFetcher
 from stock_api.domain.prediction_model import PredictionModel
 from stock_api.domain.event_store_repository import EventStoreRepository
-from stock_api.domain.exceptions import ConcurrencyError
 from stock_api.application.news.news_read_model_repository import (
     NewsReadModelRepository,
 )
 from stock_api.domain.event_publisher import DomainEventPublisher
-from stock_api.domain.prediction_aggregate import PredictionAggregate
-from stock_api.domain.prediction_state import PredictionState
 from stock_api.domain.raw_score import RawScore
 from stock_api.logger import get_logger
 

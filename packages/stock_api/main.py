@@ -10,8 +10,8 @@ from stock_api.application.companies.get_company_historical_prices_command_handl
 from stock_api.application.companies.get_company_info_command_handler import (
     GetCompanyInfoCommandHandler,
 )
-from stock_api.application.news.get_news_by_date_command_handler import (
-    GetNewsByDateCommandHandler,
+from stock_api.application.news.get_news_by_date_query_handler import (
+    GetNewsByDateQueryHandler,
 )
 from stock_api.application.predictions.predict_from_text_command_handler import (
     PredictFromTextCommandHandler,
@@ -122,7 +122,7 @@ get_latest_news_command_handler = GetLatestNewsCommandHandler(
     read_model,
     publisher,
 )
-get_news_by_date_command_handler = GetNewsByDateCommandHandler(news_repository)
+get_news_by_date_command_handler = GetNewsByDateQueryHandler(read_model)
 
 # Controllers.
 get_companies_controller = GetCompaniesController(get_companies_command_handler)
