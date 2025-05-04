@@ -2,10 +2,11 @@ from datetime import datetime, date, time
 from typing import List
 
 from pymongo import MongoClient, ASCENDING
+
+from stock_api.application.news.latest_news_dto import LatestNews
 from stock_api.application.news.news_read_model_repository import (
     NewsReadModelRepository,
 )
-from stock_api.application.news.dtos import LatestNews, PredictionResponse
 from stock_api.logger import get_logger
 
 logger = get_logger(__name__)
@@ -42,7 +43,7 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
             date=datetime.fromisoformat(doc["date"]),
             title=doc["title"],
             url=doc["url"],
-            prediction=PredictionResponse(**doc["prediction"]),
+            feeling=doc["feeling"],
         )
 
     def save(self, news: LatestNews) -> None:
@@ -56,11 +57,7 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
             "date": news.date.isoformat(),
             "title": news.title,
             "url": news.url,
-            "prediction": {
-                "score": news.prediction.score,
-                "interpretation": news.prediction.interpretation,
-                "percentage_range": news.prediction.percentage_range,
-            },
+            "feeling": news.feeling,
         }
         self._coll.update_one(
             {"_id": news.id},
@@ -93,7 +90,7 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
                     date=datetime.fromisoformat(doc["date"]),
                     title=doc["title"],
                     url=doc["url"],
-                    prediction=PredictionResponse(**doc["prediction"]),
+                    feeling=doc["feeling"],
                 )
             )
 

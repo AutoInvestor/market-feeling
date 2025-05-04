@@ -2,11 +2,10 @@ from dataclasses import dataclass
 from datetime import date
 from typing import List
 
-from stock_api.application.news.dtos import LatestNews
+from stock_api.application.news.latest_news_dto import LatestNews
 from stock_api.application.news.news_read_model_repository import (
     NewsReadModelRepository,
 )
-from stock_api.domain.news_fetcher import NewsFetcher
 
 
 @dataclass
@@ -17,19 +16,12 @@ class GetNewsByDateQuery:
 
 
 @dataclass
-class PredictionResponse:
-    score: int
-    interpretation: str
-    percentage_range: str
-
-
-@dataclass
 class NewsByDate:
     id: str
     date: date
     title: str
     url: str
-    prediction: PredictionResponse
+    feeling: int
 
 
 class GetNewsByDateQueryHandler:
@@ -50,11 +42,7 @@ class GetNewsByDateQueryHandler:
                 date=i.date,
                 title=i.title,
                 url=i.url,
-                prediction=PredictionResponse(
-                    score=i.prediction.score,
-                    interpretation=i.prediction.interpretation,
-                    percentage_range=i.prediction.percentage_range,
-                ),
+                feeling=i.feeling,
             )
             for i in items
         ]

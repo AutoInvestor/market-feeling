@@ -19,7 +19,7 @@ def make_asset_feeling_detected_event(
     news_id: str,
     title: str,
     date: datetime,
-    score: int,
+    feeling: int,
     version: int,
 ) -> DomainEvent:
     payload = {
@@ -27,7 +27,7 @@ def make_asset_feeling_detected_event(
         "news_id": news_id,
         "title": title,
         "date": date.isoformat(),
-        "score": score,
+        "feeling": feeling,
     }
 
     return DomainEvent(

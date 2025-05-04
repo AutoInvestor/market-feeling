@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import List
 
-from stock_api.application.news.dtos import LatestNews
+from stock_api.application.news.latest_news_dto import LatestNews
 from stock_api.application.news.news_read_model_repository import (
     NewsReadModelRepository,
 )

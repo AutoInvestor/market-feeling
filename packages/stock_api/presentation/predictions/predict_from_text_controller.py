@@ -13,16 +13,8 @@ class PredictionTextRequestDTO:
 
 
 @dataclass
-class PredictionDTO:
-    score: int
-    interpretation: str
-    percentage_range: str
-
-
-@dataclass
 class PredictionResponseDTO:
-    ticker: str
-    prediction: PredictionDTO
+    feeling: int
 
 
 class PredictFromTextController:
@@ -42,10 +34,5 @@ class PredictFromTextController:
 
     async def handle(self, request: PredictionTextRequestDTO) -> PredictionResponseDTO:
         command = PredictFromTextCommand(request.ticker, request.text)
-        prediction = self.__command_handler.handle(command)
-        prediction_dto = PredictionDTO(
-            score=prediction.score,
-            interpretation=prediction.interpretation,
-            percentage_range=prediction.percentage_range,
-        )
-        return PredictionResponseDTO(ticker=request.ticker, prediction=prediction_dto)
+        feeling = self.__command_handler.handle(command)
+        return PredictionResponseDTO(feeling=feeling)

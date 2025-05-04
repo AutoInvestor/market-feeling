@@ -16,11 +16,7 @@ class GetCompaniesCommandHandler:
         self.__repository = repository
 
     def handle(self) -> CompaniesTicker:
-        logger.info("Fetching all company tickers")
-
         companies = self.__repository.get_all()
         tickers = [company.ticker for company in companies.values()]
-
-        logger.debug("Found %d companies", len(tickers))
 
         return CompaniesTicker(tickers)

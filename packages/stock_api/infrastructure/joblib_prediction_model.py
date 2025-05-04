@@ -6,9 +6,8 @@ from libs.finbert_analyzer import FinBertAnalyzer
 from libs.newspaper_scraper import NewspaperScraper
 from libs.spacy_analyzer import SpacySimilarityAnalyzer
 from libs.textblob_analyzer import TextBlobAnalyzer
-
 from stock_api.domain.prediction_model import PredictionModel
-from stock_api.domain.raw_score import RawScore
+from stock_api.domain.raw_feeling import RawFeeling
 from stock_api.logger import get_logger
 
 logger = get_logger(__name__)
@@ -50,18 +49,18 @@ class JoblibPredictionModel(PredictionModel):
         )
         return df_scaled
 
-    def _predict(self, text: str, company_name: str) -> RawScore:
+    def _predict(self, text: str, company_name: str) -> RawFeeling:
         logger.info("Running prediction for company '%s'", company_name)
         X = self._extract_features(text, company_name)
-        raw_score = self._booster.predict(X)[0]
-        logger.info("Model output raw score=%s", raw_score)
-        return RawScore(raw_score)
+        raw_feeling = self._booster.predict(X)[0]
+        logger.info("Model output raw feeling=%s", raw_feeling)
+        return RawFeeling(raw_feeling)
 
-    def get_prediction_from_text(self, text: str, company_name: str) -> RawScore:
+    def get_prediction_from_text(self, text: str, company_name: str) -> RawFeeling:
         logger.debug("get_prediction_from_text called for %s", company_name)
         return self._predict(text, company_name)
 
-    def get_prediction_from_url(self, url: str, company_name: str) -> RawScore:
+    def get_prediction_from_url(self, url: str, company_name: str) -> RawFeeling:
         logger.debug(
             "get_prediction_from_url called for %s (url=%s)", company_name, url
         )
