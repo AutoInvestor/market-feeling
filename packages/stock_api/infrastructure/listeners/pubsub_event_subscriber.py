@@ -1,5 +1,6 @@
 import json
 import threading
+import traceback
 from typing import Optional
 
 from google.cloud import pubsub_v1
@@ -41,8 +42,13 @@ class PubSubEventSubscriber:
                 self._command_handler.handle(cmd)
 
             message.ack()
-        except Exception:
-            logger.exception("Failed to handle Pub/Sub message, will nack")
+        except Exception as e:
+            logger.exception(
+                "Error handling Pub/Sub message: %s: %s\n%s",
+                type(e).__name__,
+                str(e),
+                traceback.format_exc(),
+            )
             message.nack()
 
     def listen(self) -> None:
