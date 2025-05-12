@@ -8,5 +8,6 @@ environment   = "production"
 
 # non-sensitive defaults
 mongodb_db    = "market_feeling"
-gcp_project   = "my-gcp-project"
+gcp_project   = "autoinvestor-tfm"
 pubsub_topic  = "market-feeling-events"
+pubsub_subscription  = "market-feeling-to-core"

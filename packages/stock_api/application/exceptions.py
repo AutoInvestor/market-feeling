@@ -15,6 +15,12 @@ class NotFoundException(ApplicationException):
     pass
 
 
+class DuplicatedTickerException(ApplicationException):
+    """Raised when a requested resource is not found."""
+
+    pass
+
+
 class BadRequestException(ApplicationException):
     """Raised when the request is invalid."""
 
