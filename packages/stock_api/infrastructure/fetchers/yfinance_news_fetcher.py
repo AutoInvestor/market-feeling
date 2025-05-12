@@ -1,61 +1,74 @@
+from __future__ import annotations
+
 import uuid
-import yfinance as yf
 from datetime import datetime, date
 from typing import List, Optional
+
 from stock_api.domain.news import News
 from stock_api.domain.news_fetcher import NewsFetcher
+from stock_api.infrastructure.fetchers.yfinance_base import _YFinanceBase
 
 
-class YFinanceNewsFetcher(NewsFetcher):
-    def make_deterministic_id(
-        self, ticker: str, pub_datetime, title: str, url: str
+class YFinanceNewsFetcher(_YFinanceBase, NewsFetcher):
+    @staticmethod
+    def _make_deterministic_id(
+        ticker: str, pub_dt: datetime, title: str, url: str
     ) -> str:
-        ticker_norm = ticker.upper().strip()
-        date_norm = pub_datetime.isoformat()
-        title_norm = title.strip()
-        url_norm = url.strip()
-
-        raw = "||".join([ticker_norm, date_norm, title_norm, url_norm])
-
+        raw = "||".join(
+            [
+                ticker.upper().strip(),
+                pub_dt.isoformat(),
+                title.strip(),
+                url.strip(),
+            ]
+        )
         return str(uuid.uuid5(uuid.NAMESPACE_URL, raw))
 
-    def get_latest_news(self, ticker: str) -> Optional[News]:
-        ticker_upper = ticker.upper()
-        stock = yf.Ticker(ticker_upper)
-        news_list = stock.news or []
-        news_objects = []
-        for item in news_list:
-            content = item.get("content", {})
-            pub_date_str = content.get("pubDate")
-            if not pub_date_str:
-                continue
-            try:
-                pub_datetime = datetime.strptime(pub_date_str, "%Y-%m-%dT%H:%M:%SZ")
-            except Exception as e:
-                continue
+    def _fetch_news_objects(self, ticker_upper: str) -> List[News]:
+        try:
+            items = self._ticker(ticker_upper).news or []  # type: ignore[attr-defined]
+        except Exception as exc:  # pragma: no cover
+            return []
 
-            title = content.get("title", "")
-            url = content.get("previewUrl")
+        results: List[News] = []
+        for item in items:
+            ts = item.get("providerPublishTime") or item.get("providerPublishTimeMs")
+            if ts is None:
+                # Legacy fallback: explore *content.pubDate*
+                try:
+                    content = item.get("content", {})
+                    ts = datetime.strptime(
+                        content.get("pubDate", ""), "%Y-%m-%dT%H:%M:%SZ"
+                    ).timestamp()
+                except Exception:
+                    continue
+
+            pub_dt = datetime.utcfromtimestamp(int(ts))
+            title = item.get("title") or item.get("content", {}).get("title", "")
+            url = item.get("link") or item.get("url") or item.get("previewUrl")
             if not url:
-                url = content.get("canonicalUrl", {}).get("url", "")
+                url = item.get("canonicalUrl", {}).get("url", "")
 
-            news_objects.append(
+            if not title or not url:
+                continue
+
+            results.append(
                 News(
-                    id=self.make_deterministic_id(
-                        ticker_upper, pub_datetime, title, url
-                    ),
+                    id=self._make_deterministic_id(ticker_upper, pub_dt, title, url),
                     ticker=ticker_upper,
-                    date=pub_datetime,
+                    date=pub_dt,
                     title=title,
                     url=url,
                 )
             )
+        return results
 
-        if not news_objects:
-            return None
+    def get_latest_news(self, ticker: str) -> Optional[News]:  # type: ignore[override]
+        ticker_upper = ticker.upper()
+        news_items = self._fetch_news_objects(ticker_upper)
+        return max(news_items, key=lambda n: n.date) if news_items else None
 
-        latest_news = max(news_objects, key=lambda n: n.date)
-        return latest_news
-
-    def get_news_by_date(self, ticker: str, news_date: date) -> List[News]:
-        return []
+    def get_news_by_date(self, ticker: str, news_date: date) -> List[News]:  # type: ignore[override]
+        ticker_upper = ticker.upper()
+        news_items = self._fetch_news_objects(ticker_upper)
+        return [n for n in news_items if n.date.date() == news_date]
