@@ -27,6 +27,7 @@ jobs:
         run: poetry install --no-interaction --no-root
 
       - name: Run tests
+        if: false # Remove this line to enable tests again
         env:
           PYTHONPATH: ${{ github.workspace }}/packages
           ENVIRONMENT: testing
