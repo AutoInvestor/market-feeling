@@ -1,13 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from stock_api.domain.company import Company
+from stock_api.domain.company_info import CompanyInfo
 
 
 class CompanyInfoFetcher(ABC):
     @abstractmethod
-    def get_all(self) -> dict[str, Company]:
-        pass
-
-    @abstractmethod
-    def get_by_ticker(self, ticker: str) -> Optional[Company]:
+    def get_info(self, ticker: str) -> Optional[CompanyInfo]:
         pass

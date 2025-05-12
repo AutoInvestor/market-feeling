@@ -20,14 +20,13 @@ class CompanyInfoSummary:
 
 
 class GetCompanyInfoCommandHandler:
-    def __init__(self, repository: CompanyInfoFetcher):
-        self.__repository = repository
+    def __init__(self, fetcher: CompanyInfoFetcher):
+        self.__fetcher = fetcher
 
     def handle(self, command: GetCompanyInfoCommand) -> CompanyInfoSummary:
-        company_info = self.__repository.get_by_ticker(command.ticker)
+        company_info = self.__fetcher.get_info(command.ticker)
 
         if company_info is None:
             raise NotFoundException(f"Company '{command.ticker}' not found")
 
-        company = Company(ticker=command.ticker, name=company_info.name)
-        return CompanyInfoSummary(ticker=company.ticker, name=company.name)
+        return CompanyInfoSummary(ticker=command.ticker, name=company_info.name)

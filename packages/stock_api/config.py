@@ -50,6 +50,10 @@ class Settings(BaseSettings):
         _toml.get("app", {}).get("pubsub_topic", ""),
         env="PUBSUB_TOPIC",
     )
+    PUBSUB_SUBSCRIPTION_CORE: str = Field(
+        _toml.get("app", {}).get("pubsub_subscription", ""),
+        env="PUBSUB_SUBSCRIPTION_CORE",
+    )
 
     class Config:
         # load a .env file for local testing

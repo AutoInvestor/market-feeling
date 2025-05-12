@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from stock_api.application.exceptions import NotFoundException
-from stock_api.domain.company_info_fetcher import CompanyInfoFetcher
+from stock_api.domain.company_repository import CompanyRepository
 from stock_api.domain.prediction_model import PredictionModel
 from stock_api.domain.raw_feeling import RawFeeling
 from stock_api.logger import get_logger
@@ -16,12 +16,12 @@ class PredictFromURLCommand:
 
 
 class PredictFromURLCommandHandler:
-    def __init__(self, repository: CompanyInfoFetcher, model: PredictionModel):
+    def __init__(self, repository: CompanyRepository, model: PredictionModel):
         self.__repository = repository
         self.__model = model
 
     def handle(self, command: PredictFromURLCommand) -> int:
-        company = self.__repository.get_by_ticker(command.ticker)
+        company = self.__repository.find_by_ticker(command.ticker)
 
         if company is None:
             raise NotFoundException(f"Company '{command.ticker}' not found")

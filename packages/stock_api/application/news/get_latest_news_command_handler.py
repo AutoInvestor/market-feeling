@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from stock_api.application.exceptions import NotFoundException
 from stock_api.application.news.latest_news_dto import LatestNews
 from stock_api.domain.company_info_fetcher import CompanyInfoFetcher
+from stock_api.domain.company_repository import CompanyRepository
 from stock_api.domain.news_fetcher import NewsFetcher
 from stock_api.domain.prediction_model import PredictionModel
 from stock_api.domain.event_store_repository import EventStoreRepository
@@ -25,7 +26,7 @@ class GetLatestNewsCommandHandler:
     def __init__(
         self,
         news_repository: NewsFetcher,
-        company_repository: CompanyInfoFetcher,
+        company_repository: CompanyRepository,
         model: PredictionModel,
         event_store: EventStoreRepository,
         read_model: NewsReadModelRepository,
@@ -42,9 +43,8 @@ class GetLatestNewsCommandHandler:
         logger.info("GetLatestNews for ticker='%s'", command.ticker)
 
         # Validate company exists
-        company = self.__company_repository.get_by_ticker(command.ticker)
+        company = self.__company_repository.find_by_ticker(command.ticker)
         if company is None:
-            logger.warning("Company not found: %s", command.ticker)
             raise NotFoundException(f"Company '{command.ticker}' not found")
 
         # Fetch raw news

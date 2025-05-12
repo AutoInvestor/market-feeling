@@ -5,35 +5,8 @@ from stock_api.domain.company_info_fetcher import CompanyInfoFetcher
 
 
 class YFinanceCompanyInfoFetcher(CompanyInfoFetcher):
-    def __init__(self):
-        self.__tickers = [
-            "AAPL",  # Apple Inc.
-            "MSFT",  # Microsoft Corporation
-            "AMZN",  # Amazon.com, Inc.
-            "GOOGL",  # Alphabet Inc.
-            "NVDA",  # NVIDIA Corporation
-            "TSLA",  # Tesla, Inc.
-            "NFLX",  # Netflix, Inc.
-            "ADBE",  # Adobe Inc.
-            "INTC",  # Intel Corporation
-        ]
-
-    def get_all(self) -> Dict[str, Company]:
-        companies = {}
-        for ticker in self.__tickers:
-            stock = yf.Ticker(ticker)
-            info = stock.info
-            name = info.get("longName") or info.get("shortName") or ticker
-            companies[ticker.upper()] = Company(ticker=ticker.upper(), name=name)
-        return companies
-
-    def get_by_ticker(self, ticker: str) -> Optional[Company]:
-        ticker_upper = ticker.upper()
-
-        if ticker_upper not in [t.upper() for t in self.__tickers]:
-            return None
-
-        stock = yf.Ticker(ticker_upper)
+    def get_info(self, ticker: str) -> Optional[Company]:
+        stock = yf.Ticker(ticker)
         info = stock.info
-        name = info.get("longName") or info.get("shortName") or ticker_upper
-        return Company(ticker=ticker_upper, name=name)
+        name = info.get("longName") or info.get("shortName") or ticker
+        return Company(ticker=ticker, name=name)

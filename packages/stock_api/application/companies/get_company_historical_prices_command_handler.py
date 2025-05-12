@@ -22,11 +22,11 @@ class HistoricalPricesSummary:
 
 
 class GetCompanyHistoricalPricesCommandHandler:
-    def __init__(self, repository: HistoricalPriceFetcher):
-        self.__repository = repository
+    def __init__(self, fetcher: HistoricalPriceFetcher):
+        self.__fetcher = fetcher
 
     def handle(self, command: GetCompanyHistoricalPricesCommand):
-        prices = self.__repository.get_historical_prices(
+        prices = self.__fetcher.get_historical_prices(
             command.ticker, command.start, command.end
         )
 

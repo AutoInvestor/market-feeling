@@ -1,7 +1,6 @@
-from typing import List, Optional
+from typing import List
 from stock_api.domain.event_store_repository import EventStoreRepository
 from stock_api.domain.events import DomainEvent
-from stock_api.domain.exceptions import ConcurrencyError
 from stock_api.domain.prediction_aggregate import PredictionAggregate
 
 
