@@ -1,10 +1,10 @@
+import datetime
 from dataclasses import dataclass
 
 from stock_api.application.exceptions import NotFoundException
 from stock_api.application.news.latest_news_dto import LatestNews
-from stock_api.domain.company_info_fetcher import CompanyInfoFetcher
 from stock_api.domain.company_repository import CompanyRepository
-from stock_api.domain.news_fetcher import NewsFetcher
+from stock_api.domain.news import News
 from stock_api.domain.prediction_model import PredictionModel
 from stock_api.domain.event_store_repository import EventStoreRepository
 from stock_api.application.news.news_read_model_repository import (
@@ -18,28 +18,30 @@ logger = get_logger(__name__)
 
 
 @dataclass
-class GetLatestNewsCommand:
+class RegisterNewsCommand:
+    id: str
     ticker: str
+    date: datetime
+    title: str
+    url: str
 
 
-class GetLatestNewsCommandHandler:
+class RegisterNewsCommandHandler:
     def __init__(
         self,
-        news_repository: NewsFetcher,
         company_repository: CompanyRepository,
         model: PredictionModel,
         event_store: EventStoreRepository,
         read_model: NewsReadModelRepository,
         event_publisher: DomainEventPublisher,
     ):
-        self.__news_repository = news_repository
         self.__company_repository = company_repository
         self.__model = model
         self.__event_store = event_store
         self.__read_model = read_model
         self.__event_publisher = event_publisher
 
-    def handle(self, command: GetLatestNewsCommand) -> LatestNews:
+    def handle(self, command: RegisterNewsCommand):
         logger.info("GetLatestNews for ticker='%s'", command.ticker)
 
         # Validate company exists
@@ -47,13 +49,12 @@ class GetLatestNewsCommandHandler:
         if company is None:
             raise NotFoundException(f"Company '{command.ticker}' not found")
 
-        # Fetch raw news
-        news = self.__news_repository.get_latest_news(command.ticker)
-        if news is None:
-            logger.warning("No news found for %s", command.ticker)
-            return LatestNews.empty()
+        # Create news from the command DTO
+        news = News(
+            command.id, command.ticker, command.date, command.title, command.url
+        )
 
-        # Try read model - best effort
+        # Try read model
         existing = self.__read_model.get(news.id)
         if existing:
             logger.debug("Read-model cache hit for %s", command.ticker)
@@ -97,4 +98,3 @@ class GetLatestNewsCommandHandler:
         self.__read_model.save(latest_news)
 
         logger.info("Completed GetLatestNews for %s", command.ticker)
-        return latest_news
