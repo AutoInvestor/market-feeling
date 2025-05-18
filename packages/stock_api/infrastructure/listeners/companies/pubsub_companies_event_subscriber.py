@@ -17,7 +17,7 @@ from stock_api.logger import get_logger
 logger = get_logger(__name__)
 
 
-class PubSubEventSubscriber:
+class PubSubCompaniesEventSubscriber:
     def __init__(
         self,
         command_handler: RegisterCompanyCommandHandler,
@@ -38,6 +38,7 @@ class PubSubEventSubscriber:
                 cmd = RegisterCompanyCommand(
                     id=event.aggregate_id,
                     ticker=event.payload.get("ticker"),
+                    name=event.payload.get("name"),
                 )
                 self._command_handler.handle(cmd)
 

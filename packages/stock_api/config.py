@@ -51,8 +51,12 @@ class Settings(BaseSettings):
         env="PUBSUB_TOPIC",
     )
     PUBSUB_SUBSCRIPTION_CORE: str = Field(
-        _toml.get("app", {}).get("pubsub_subscription", ""),
+        _toml.get("app", {}).get("pubsub_subscription_core", ""),
         env="PUBSUB_SUBSCRIPTION_CORE",
+    )
+    PUBSUB_SUBSCRIPTION_NEWS_SCRAPER: str = Field(
+        _toml.get("app", {}).get("pubsub_subscription_news_scraper", ""),
+        env="PUBSUB_SUBSCRIPTION_NEWS_SCRAPER",
     )
 
     class Config:

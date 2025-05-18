@@ -1,9 +1,8 @@
-from typing import Optional, List
+from typing import List
 
 from pymongo import MongoClient
 from stock_api.domain.event_store_repository import EventStoreRepository
 from stock_api.domain.events import DomainEvent
-from stock_api.domain.exceptions import ConcurrencyError
 from stock_api.domain.prediction_aggregate import PredictionAggregate
 from stock_api.logger import get_logger
 
