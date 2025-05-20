@@ -37,13 +37,12 @@ class PubSubNewsEventSubscriber:
             event = PubSubEventMapper.from_dict(raw)
             if event.type == "NEW_LATEST_NEWS":
                 raw_date = event.payload.get("date")
-                if isinstance(raw_date, datetime):
-                    raw_date = raw_date.isoformat()
+                parsed_date = datetime.fromisoformat(raw_date)
 
                 cmd = RegisterNewsCommand(
                     id=event.aggregate_id,
                     ticker=event.payload.get("ticker"),
-                    date=raw_date,
+                    date=parsed_date,
                     title=event.payload.get("title"),
                     url=event.payload.get("url"),
                 )
