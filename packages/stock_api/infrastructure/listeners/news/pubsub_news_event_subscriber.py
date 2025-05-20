@@ -1,6 +1,7 @@
 import json
 import threading
 import traceback
+from datetime import datetime
 from typing import Optional
 
 from google.cloud import pubsub_v1
@@ -35,10 +36,13 @@ class PubSubNewsEventSubscriber:
 
             event = PubSubEventMapper.from_dict(raw)
             if event.type == "NEW_LATEST_NEWS":
+                raw_date = event.payload.get("date")
+                parsed_date = datetime.fromisoformat(raw_date)
+
                 cmd = RegisterNewsCommand(
                     id=event.aggregate_id,
                     ticker=event.payload.get("ticker"),
-                    date=event.payload.get("date"),
+                    date=parsed_date,
                     title=event.payload.get("title"),
                     url=event.payload.get("url"),
                 )
