@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, date
 from typing import List
 
 from google.cloud import pubsub_v1
@@ -7,6 +8,12 @@ from stock_api.domain.events import DomainEvent
 from stock_api.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+def _serialize_datetime(o):
+    if isinstance(o, (datetime, date)):
+        return o.isoformat()
+    raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
 
 
 class PubSubEventPublisher(DomainEventPublisher):
@@ -23,16 +30,24 @@ class PubSubEventPublisher(DomainEventPublisher):
             return
 
         for event in events:
-            message = json.dumps(
-                {
-                    "eventId": event.event_id,
-                    "occurredAt": event.occurred_at,
-                    "aggregateId": event.aggregate_id,
-                    "version": event.version,
-                    "type": event.type,
-                    "payload": event.payload,
-                }
+            payload = {
+                "eventId": event.event_id,
+                "occurredAt": event.occurred_at,  # datetime
+                "aggregateId": event.aggregate_id,
+                "version": event.version,
+                "type": event.type,
+                "payload": event.payload,
+            }
+
+            message_bytes = json.dumps(
+                payload,
+                default=_serialize_datetime,
+                separators=(",", ":"),
             ).encode("utf-8")
 
-            future = self._publisher.publish(self._topic_path, message, type=event.type)
+            future = self._publisher.publish(
+                self._topic_path, message_bytes, type=event.type
+            )
+
             future.result()
+            logger.debug("Published event %s to %s", event.event_id, self._topic_path)
