@@ -89,27 +89,24 @@ jobs:
           sudo docker image prune --all --force || true
           df -h
 
-      - name: Build Docker Image
+      - name: GCP Auth
         if: steps.version_increment.outputs.bump != 'none'
-        run: |
-          docker build \
-            -t ${{ vars.DOCKER_ARTIFACT_NAMESPACE }}/autoinvestor-${{ github.event.repository.name }}:${{ steps.calculate_version.outputs.new_version }} \
-            -t ${{ vars.DOCKER_ARTIFACT_NAMESPACE }}/autoinvestor-${{ github.event.repository.name }}:latest \
-            .
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.BUILDER_SA_EMAIL }}
 
-      - name: Login into Artifact Registry
+      - name: Build & push docker image
         if: steps.version_increment.outputs.bump != 'none'
+        env:
+          DOCKER_IMAGE_NAME: "${{ vars.DOCKER_ARTIFACT_NAMESPACE }}/autoinvestor-market-feeling:${{ steps.calculate_version.outputs.new_version }}"
         run: |
-          echo '${{ secrets.GCP_SA_KEY }}' | docker login \
-            --username _json_key \
-            --password-stdin \
-            ${{ vars.DOCKER_ARTIFACT_REGISTRY}}
-
-      - name: Push Docker Image
-        if: steps.version_increment.outputs.bump != 'none'
-        run: |
-          docker push ${{ vars.DOCKER_ARTIFACT_NAMESPACE }}/autoinvestor-${{ github.event.repository.name }}:${{ steps.calculate_version.outputs.new_version }}
-          docker push ${{ vars.DOCKER_ARTIFACT_NAMESPACE }}/autoinvestor-${{ github.event.repository.name }}:latest
+          echo -e "\033[32mBuilding docker image\033[0m"
+          docker build -t "${DOCKER_IMAGE_NAME}" .
+          echo -e "\033[32mConfiguring docker registry\033[0m"
+          gcloud auth configure-docker "${{ vars.DOCKER_ARTIFACT_REGISTRY }}" --quiet
+          echo -e "\033[32mPushing image\033[0m"
+          docker push "${DOCKER_IMAGE_NAME}"
 
       - name: Create GitHub Release
         if: steps.version_increment.outputs.bump != 'none'
