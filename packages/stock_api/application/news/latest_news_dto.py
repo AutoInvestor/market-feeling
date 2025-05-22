@@ -3,11 +3,6 @@ from datetime import datetime
 
 
 @dataclass
-class GetLatestNewsCommand:
-    ticker: str
-
-
-@dataclass
 class LatestNews:
     id: str
     ticker: str

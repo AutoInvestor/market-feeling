@@ -19,3 +19,7 @@ class NewsReadModelRepository(ABC):
         self, ticker: str, start_date: date, end_date: date
     ) -> List[LatestNews]:
         pass
+
+    @abstractmethod
+    def get_latest_news_for_ticker(self, ticker: str, limit: int) -> List[LatestNews]:
+        pass

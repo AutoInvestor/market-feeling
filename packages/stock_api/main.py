@@ -4,15 +4,13 @@ from fastapi import FastAPI
 from stock_api.application.companies.register_company_command_handler import (
     RegisterCompanyCommandHandler,
 )
+from stock_api.application.news.get_news_query_handler import GetNewsQueryHandler
 from stock_api.config import settings
 from stock_api.logger import get_logger
 from stock_api.infrastructure.http_exception_handler import HttpExceptionHandler
 
 from stock_api.application.news.register_news_command_handler import (
     RegisterNewsCommandHandler,
-)
-from stock_api.application.news.get_news_by_date_query_handler import (
-    GetNewsByDateQueryHandler,
 )
 from stock_api.infrastructure.joblib_prediction_model import JoblibPredictionModel
 
@@ -48,9 +46,7 @@ from stock_api.infrastructure.listeners.news.pubsub_news_event_subscriber import
 )
 
 # Presentation
-from stock_api.presentation.get_news_by_date_controller import (
-    GetNewsByDateController,
-)
+from stock_api.presentation.get_news_controller import GetNewsController
 
 app = FastAPI()
 logger = get_logger(__name__)
@@ -78,10 +74,10 @@ else:
     )
 
 # Application command handlers
-get_news_by_date_handler = GetNewsByDateQueryHandler(read_model)
+get_news_handler = GetNewsQueryHandler(read_model, company_repo)
 
 # Presentation controllers
-app.include_router(GetNewsByDateController(get_news_by_date_handler).router)
+app.include_router(GetNewsController(get_news_handler).router)
 
 # Pub/Sub subscriber wiring (only in production)
 if settings.ENVIRONMENT.lower() != "testing":

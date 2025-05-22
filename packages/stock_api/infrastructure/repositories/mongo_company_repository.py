@@ -51,6 +51,16 @@ class MongoCompanyRepository(CompanyRepository):
 
         return Company(id=doc["_id"], ticker=doc["ticker"], name=doc["name"])
 
+    def find_by_asset_id(self, asset_id: str) -> Optional[Company]:
+        if not self._enabled:
+            return None
+
+        doc = self._coll.find_one({"_id": asset_id}, {"_id": 1, "ticker": 1, "name": 1})
+        if not doc:
+            return None
+
+        return Company(id=doc["_id"], ticker=doc["ticker"], name=doc["name"])
+
     def save(self, company: Company):
         if not self._enabled:
             return
