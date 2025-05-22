@@ -18,5 +18,9 @@ class CompanyRepository(ABC):
         pass
 
     @abstractmethod
+    def find_by_asset_id(self, asset_id: str) -> Optional[Company]:
+        pass
+
+    @abstractmethod
     def save(self, company: Company):
         pass

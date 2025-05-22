@@ -30,6 +30,12 @@ class InMemoryCompanyRepository(CompanyRepository):
                 return c
         return None
 
+    def find_by_asset_id(self, asset_id: str) -> Optional[Company]:
+        for c in self.__companies:
+            if c.id == asset_id:
+                return c
+        return None
+
     def save(self, company: Company):
         for idx, stored in enumerate(self.__companies):
             if stored.ticker == company.ticker:

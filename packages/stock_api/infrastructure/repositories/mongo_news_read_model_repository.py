@@ -1,7 +1,7 @@
 from datetime import datetime, date, time
 from typing import List
 
-from pymongo import MongoClient, ASCENDING
+from pymongo import MongoClient, ASCENDING, DESCENDING
 
 from stock_api.application.news.latest_news_dto import LatestNews
 from stock_api.application.news.news_read_model_repository import (
@@ -80,6 +80,35 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
                 "date": {"$gte": start_iso, "$lte": end_iso},
             }
         ).sort("date", ASCENDING)
+
+        results: List[LatestNews] = []
+        for doc in cursor:
+            results.append(
+                LatestNews(
+                    id=doc["_id"],
+                    ticker=doc["ticker"],
+                    date=datetime.fromisoformat(doc["date"]),
+                    title=doc["title"],
+                    url=doc["url"],
+                    feeling=doc["feeling"],
+                )
+            )
+
+        return results
+
+    def get_latest_news_for_ticker(self, ticker: str, limit: int) -> List[LatestNews]:
+        if not self._enabled:
+            return []
+
+        if limit < 1:
+            return []
+        limit = min(limit, 50)
+
+        cursor = (
+            self._coll.find({"ticker": ticker})
+            .sort("date", DESCENDING)  # newest → oldest
+            .limit(limit)
+        )
 
         results: List[LatestNews] = []
         for doc in cursor:
