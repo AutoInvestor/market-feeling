@@ -78,7 +78,7 @@ class RegisterNewsCommandHandler:
         self.__event_store.save(prediction)
 
         # Publish events to notify subscribers
-        self.__event_publisher.publish(events)
+        self.__event_publisher.publish(events, company.id)
 
         # After publishing, clear the uncommitted events from the aggregate
         prediction.mark_events_as_committed()

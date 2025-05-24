@@ -6,5 +6,5 @@ from stock_api.domain.events import DomainEvent
 
 class DomainEventPublisher(ABC):
     @abstractmethod
-    def publish(self, events: List[DomainEvent]):
+    def publish(self, events: List[DomainEvent], asset_id: str):
         pass

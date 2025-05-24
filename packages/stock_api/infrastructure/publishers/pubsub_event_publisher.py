@@ -25,18 +25,27 @@ class PubSubEventPublisher(DomainEventPublisher):
         self._publisher = pubsub_v1.PublisherClient()
         self._topic_path = self._publisher.topic_path(project_id, topic)
 
-    def publish(self, events: List[DomainEvent]):
+    def publish(self, events: List[DomainEvent], asset_id: str):
         if not self._enabled:
             return
 
         for event in events:
+            event_payload = {
+                "assetId": asset_id,
+                "url": event.payload["url"],
+                "newsId": event.payload["url"],
+                "title": event.payload["date"],
+                "date": event.payload["url"],
+                "feeling": event.payload["url"],
+            }
+
             payload = {
                 "eventId": event.event_id,
-                "occurredAt": event.occurred_at,  # datetime
+                "occurredAt": event.occurred_at,
                 "aggregateId": event.aggregate_id,
                 "version": event.version,
                 "type": event.type,
-                "payload": event.payload,
+                "payload": event_payload,
             }
 
             message_bytes = json.dumps(
