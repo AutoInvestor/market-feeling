@@ -54,7 +54,7 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
         doc = {
             "_id": news.id,
             "ticker": news.ticker,
-            "date": news.date.isoformat(),
+            "date": news.date,
             "title": news.title,
             "url": news.url,
             "feeling": news.feeling,
