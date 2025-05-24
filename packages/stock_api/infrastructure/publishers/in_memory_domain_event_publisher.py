@@ -12,7 +12,7 @@ class InMemoryDomainEventPublisher(DomainEventPublisher):
         self.published_events: list[DomainEvent] = []
         logger.info("Initialized InMemoryDomainEventPublisher")
 
-    def publish(self, events: List[DomainEvent]):
+    def publish(self, events: List[DomainEvent], asset_id: str):
         for evt in events:
             self.published_events.append(evt)
 
