@@ -40,7 +40,7 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
         return LatestNews(
             id=doc["_id"],
             ticker=doc["ticker"],
-            date=datetime.fromisoformat(doc["date"]),
+            date=doc["date"],
             title=doc["title"],
             url=doc["url"],
             feeling=doc["feeling"],
@@ -87,7 +87,7 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
                 LatestNews(
                     id=doc["_id"],
                     ticker=doc["ticker"],
-                    date=datetime.fromisoformat(doc["date"]),
+                    date=doc["date"],
                     title=doc["title"],
                     url=doc["url"],
                     feeling=doc["feeling"],
@@ -116,7 +116,7 @@ class MongoNewsReadModelRepository(NewsReadModelRepository):
                 LatestNews(
                     id=doc["_id"],
                     ticker=doc["ticker"],
-                    date=datetime.fromisoformat(doc["date"]),
+                    date=doc["date"],
                     title=doc["title"],
                     url=doc["url"],
                     feeling=doc["feeling"],
