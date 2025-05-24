@@ -33,10 +33,10 @@ class PubSubEventPublisher(DomainEventPublisher):
             event_payload = {
                 "assetId": asset_id,
                 "url": event.payload["url"],
-                "newsId": event.payload["url"],
-                "title": event.payload["date"],
-                "date": event.payload["url"],
-                "feeling": event.payload["url"],
+                "newsId": event.payload["news_id"],
+                "title": event.payload["title"],
+                "date": event.payload["date"],
+                "feeling": event.payload["feeling"],
             }
 
             payload = {
